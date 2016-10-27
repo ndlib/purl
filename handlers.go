@@ -23,6 +23,14 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func AdminIndex(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(len(purls)); err != nil {
+		panic(err)
+	}
+}
+
 func PurlShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var purlId int
@@ -39,48 +47,60 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-  	// If we didn't find it, 404
-  	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-  	w.WriteHeader(http.StatusNotFound)
-  	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-  		panic(err)
-  	}
+	// If we didn't find it, 404
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		panic(err)
+	}
+}
 
-  }
+func Query(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var query string
+	query = vars["query"]
+	query_body := RepoFindQuery(query)
+	if query_body != nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(query_body); err != nil {
+			panic(err)
+		}
+		return
+	}
 
-// func TodoIndex(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-// 	w.WriteHeader(http.StatusOK)
-// 	if err := json.NewEncoder(w).Encode(todos); err != nil {
-// 		panic(err)
-// 	}
-// }
-//
-// func TodoShow(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-// 	var todoId int
-// 	var err error
-// 	if todoId, err = strconv.Atoi(vars["todoId"]); err != nil {
-// 		panic(err)
-// 	}
-// 	todo := RepoFindTodo(todoId)
-// 	if todo.Id > 0 {
-// 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-// 		w.WriteHeader(http.StatusOK)
-// 		if err := json.NewEncoder(w).Encode(todo); err != nil {
-// 			panic(err)
-// 		}
-// 		return
-// 	}
-//
-// 	// If we didn't find it, 404
-// 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-// 	w.WriteHeader(http.StatusNotFound)
-// 	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-// 		panic(err)
-// 	}
-//
-// }
+	// If we didn't find it, 404
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		panic(err)
+	}
+}
+
+func PurlShowFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var purlId int
+	var err error
+	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
+		panic(err)
+	}
+	purl := RepoFindPurlFile(purlId, vars["filename"])
+	if purl.Id > 0 {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(purl); err != nil {
+			panic(err)
+		}
+		return
+	}
+	// If we didn't find it, 404
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		panic(err)
+	}
+
+}
 
 /*
 Test with this curl command:

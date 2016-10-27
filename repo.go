@@ -1,10 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 var currentId int
 
 var purls Purls
+var repos Repos
 
 // Give us some seed data
 func init() {
@@ -13,6 +17,26 @@ func init() {
 }
 
 func RepoFindPurl(id int) Purl {
+	for _, t := range purls {
+		if t.Id == id {
+			return t
+		}
+	}
+	// return empty if not found
+	return Purl{}
+}
+
+func RepoFindQuery(query string) []RepoObj {
+	var ret []RepoObj
+	for _, q := range repos {
+		if strings.Contains(q.information, query) {
+			ret = append(ret, q)
+		}
+	}
+	return ret
+}
+
+func RepoFindPurlFile(id int, file string) Purl {
 	for _, t := range purls {
 		if t.Id == id {
 			return t
@@ -37,5 +61,5 @@ func RepoDestroyPurl(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Could not find Todo with id of %d to delete", id)
+	return fmt.Errorf("Could not find Purl with id of %d to delete", id)
 }

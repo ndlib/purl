@@ -19,6 +19,12 @@ var routes = Routes{
 		Index,
 	},
 	Route{
+		"AdminIndex",
+		"GET",
+		"/admin",
+		AdminIndex,
+	},
+	Route{
 		"PurlIndex",
 		"GET",
 		"/purls",
@@ -27,13 +33,25 @@ var routes = Routes{
 	Route{
 		"PurlCreate",
 		"POST",
-		"/purls",
+		"/purl/create",
 		PurlCreate,
 	},
 	Route{
 		"PurlShow",
 		"GET",
-		"/purls/{purlId}",
+		"/view/{purlId}",
 		PurlShow,
+	},
+	Route{
+		"PurlShowFile",
+		"GET",
+		"/view/{purlId}/{filename}",
+		PurlShowFile,
+	},
+	Route{
+		"Query",
+		"GET",
+		"/query?={query}",
+		Query,
 	},
 }
