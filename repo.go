@@ -5,19 +5,32 @@ import (
 	"strings"
 )
 
-var currentId int
+// A Repository stores the purls we know about.
+type Repository interface {
+	// FindPurl returns information about the given purl identifier.
+	// It returns the zero Purl if there is no purl with that id.
+	FindPurl(id int) Purl
 
-var purls Purls
-var repos Repos
+	//
+	FindQuery(query string) []RepoObj
 
-// Give us some seed data
-func init() {
-	RepoCreatePurl(Purl{source_app: "Library"})
-	RepoCreatePurl(Purl{source_app: "Code School"})
+	AllPurls() []Purl
+
+	CreatePurl(t Purl) Purl
 }
 
-func RepoFindPurl(id int) Purl {
-	for _, t := range purls {
+type memoryRepo struct {
+	currentID int
+	purls     Purls
+	repos     Repos
+}
+
+func (mr *memoryRepo) AllPurls() []Purl {
+	return mr.purls
+}
+
+func (mr *memoryRepo) FindPurl(id int) Purl {
+	for _, t := range mr.purls {
 		if t.Id == id {
 			return t
 		}
@@ -26,9 +39,9 @@ func RepoFindPurl(id int) Purl {
 	return Purl{}
 }
 
-func RepoFindQuery(query string) []RepoObj {
+func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 	var ret []RepoObj
-	for _, q := range repos {
+	for _, q := range mr.repos {
 		if strings.Contains(q.information, query) {
 			ret = append(ret, q)
 		}
@@ -36,28 +49,18 @@ func RepoFindQuery(query string) []RepoObj {
 	return ret
 }
 
-func RepoFindPurlFile(id int, file string) Purl {
-	for _, t := range purls {
-		if t.Id == id {
-			return t
-		}
-	}
-	// return empty if not found
-	return Purl{}
-}
-
 //this is bad, I don't think it passes race condtions
-func RepoCreatePurl(t Purl) Purl {
-	currentId += 1
-	t.Id = currentId
-	purls = append(purls, t)
+func (mr *memoryRepo) CreatePurl(t Purl) Purl {
+	mr.currentID += 1
+	t.Id = mr.currentID
+	mr.purls = append(mr.purls, t)
 	return t
 }
 
-func RepoDestroyPurl(id int) error {
-	for i, t := range purls {
+func (mr *memoryRepo) DestroyPurl(id int) error {
+	for i, t := range mr.purls {
 		if t.Id == id {
-			purls = append(purls[:i], purls[i+1:]...)
+			mr.purls = append(mr.purls[:i], mr.purls[i+1:]...)
 			return nil
 		}
 	}

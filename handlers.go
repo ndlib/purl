@@ -18,7 +18,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(purls); err != nil {
+	if err := json.NewEncoder(w).Encode(datasource.AllPurls()); err != nil {
 		panic(err)
 	}
 }
@@ -26,7 +26,8 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(len(purls)); err != nil {
+	ps := datasource.AllPurls()
+	if err := json.NewEncoder(w).Encode(len(ps)); err != nil {
 		panic(err)
 	}
 }
@@ -38,7 +39,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
 		panic(err)
 	}
-	purl := RepoFindPurl(purlId)
+	purl := datasource.FindPurl(purlId)
 	if purl.Id > 0 {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
@@ -59,7 +60,7 @@ func Query(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var query string
 	query = vars["query"]
-	query_body := RepoFindQuery(query)
+	query_body := datasource.FindQuery(query)
 	if query_body != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
@@ -84,7 +85,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
 		panic(err)
 	}
-	purl := RepoFindPurlFile(purlId, vars["filename"])
+	purl := datasource.FindPurl(purlId)
 	if purl.Id > 0 {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
@@ -125,7 +126,7 @@ func PurlCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t := RepoCreatePurl(purl)
+	t := datasource.CreatePurl(purl)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(t); err != nil {
