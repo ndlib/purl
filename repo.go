@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 // A Repository stores the purls we know about.
@@ -19,17 +20,30 @@ type Repository interface {
 	CreatePurl(t Purl) Purl
 }
 
+// A MemoryRepo is a Repository that keeps everything in memory.
+// It is mostly useful for testing.
 type memoryRepo struct {
+	m sync.RWMutex // protects everything below
+
+	// last ID minted
 	currentID int
-	purls     Purls
-	repos     Repos
+
+	// list of Purl objects
+	purls Purls
+
+	// list of repository resources
+	repos Repos
 }
 
 func (mr *memoryRepo) AllPurls() []Purl {
-	return mr.purls
+	mr.m.RLock()
+	defer mr.m.RUnlock()
+	return mr.purls[:]
 }
 
 func (mr *memoryRepo) FindPurl(id int) Purl {
+	mr.m.RLock()
+	defer mr.m.RUnlock()
 	for _, t := range mr.purls {
 		if t.Id == id {
 			return t
@@ -40,6 +54,8 @@ func (mr *memoryRepo) FindPurl(id int) Purl {
 }
 
 func (mr *memoryRepo) FindQuery(query string) []RepoObj {
+	mr.m.RLock()
+	defer mr.m.RUnlock()
 	var ret []RepoObj
 	for _, q := range mr.repos {
 		if strings.Contains(q.information, query) {
@@ -49,8 +65,9 @@ func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 	return ret
 }
 
-//this is bad, I don't think it passes race condtions
 func (mr *memoryRepo) CreatePurl(t Purl) Purl {
+	mr.m.Lock()
+	defer mr.m.Unlock()
 	mr.currentID += 1
 	t.Id = mr.currentID
 	mr.purls = append(mr.purls, t)
@@ -58,6 +75,8 @@ func (mr *memoryRepo) CreatePurl(t Purl) Purl {
 }
 
 func (mr *memoryRepo) DestroyPurl(id int) error {
+	mr.m.Lock()
+	defer mr.m.Unlock()
 	for i, t := range mr.purls {
 		if t.Id == id {
 			mr.purls = append(mr.purls[:i], mr.purls[i+1:]...)
