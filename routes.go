@@ -51,7 +51,7 @@ var routes = Routes{
 	Route{
 		"Query",
 		"GET",
-		"/query?={query}",
+		"/query/{query}",
 		Query,
 	},
 }

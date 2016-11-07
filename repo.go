@@ -51,8 +51,8 @@ func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 
 //this is bad, I don't think it passes race condtions
 func (mr *memoryRepo) CreatePurl(t Purl) Purl {
-	mr.currentID += 1
-	t.Id = mr.currentID
+	// mr.currentID += 1
+	// t.Id = mr.currentID
 	mr.purls = append(mr.purls, t)
 	return t
 }

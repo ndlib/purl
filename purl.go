@@ -4,11 +4,13 @@ import "time"
 
 type Purl struct {
 	Id            int       `json:"id"`
-	repo_obj_id   string    `json:"repo_obj_id"`
-	access_count  int       `json:"access_count"`
-	last_accessed time.Time `json:"last_accessed"`
-	source_app    string    `json:"source_app"`
-	date_created  time.Time `json:"date_created"`
+	Repo_obj_id   string    `json:"repo_obj_id"`
+	Access_count  int       `json:"access_count"`
+	Last_accessed time.Time `json:"last_accessed"`
+	Repo_url    string      `json:"repo_url"`
+	Purl_url    string      `json:"purl_url"`
+	Date_created  time.Time `json:"date_created"`
+	File_name 		string		`json:"file_name"`
 }
 
 type Purls []Purl
