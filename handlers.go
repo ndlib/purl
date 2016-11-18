@@ -47,9 +47,12 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		// t := template.New("view.html")
-		t, _ := template.ParseFiles("./view.html")
+		t, err := template.ParseFiles("./view.html")
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println(t)
-		err := t.Execute(w, purl)
+		err = t.Execute(w, purl)
 		if err != nil {
 			panic(err)
 		}
