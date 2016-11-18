@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
@@ -18,6 +19,10 @@ type Repository interface {
 	AllPurls() []Purl
 
 	CreatePurl(t Purl) Purl
+}
+
+type purl_db struct {
+	db *sql.DB // store pointer to sql database
 }
 
 // A MemoryRepo is a Repository that keeps everything in memory.
