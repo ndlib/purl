@@ -126,10 +126,7 @@ func PurlCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t := datasource.CreatePurl(purl)
+	datasource.CreatePurl(purl)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(t); err != nil {
-		panic(err)
-	}
 }
