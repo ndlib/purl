@@ -54,7 +54,7 @@ func main() {
 	}
 
 	// mySql information for login
-	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		config.Mysql.User,
 		config.Mysql.Password,
 		config.Mysql.Host,

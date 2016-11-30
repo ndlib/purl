@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 // A Repository stores the purls we know about.
@@ -65,7 +67,7 @@ func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 	defer mr.m.RUnlock()
 	var ret []RepoObj
 	for _, q := range mr.repos {
-		if strings.Contains(q.information, query) {
+		if strings.Contains(q.Information, query) {
 			ret = append(ret, q)
 		}
 	}
@@ -112,19 +114,24 @@ func (sq *purldb) AllPurls() []Purl {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id int
-		var repo_obj_id string
-		var access_count int
-		var last_accessed time.Time
-		var source_app string
-		var date_created time.Time
-		if err := rows.Scan(&id, &repo_obj_id, &access_count, &last_accessed, &source_app, &date_created); err != nil {
+		var temp_purl Purl
+		var last_accessed mysql.NullTime
+		var source_app sql.NullString
+		err := rows.Scan(&temp_purl.Id, &temp_purl.Repo_obj_id, &temp_purl.Access_count, &last_accessed, &source_app, &temp_purl.Date_created)
+		if err != nil {
 			log.Printf("Scan not succeded: %s", err)
 		}
-		result = append(result, Purl{Id: id, repo_obj_id: repo_obj_id, access_count: access_count, last_accessed: last_accessed, source_app: source_app, date_created: date_created})
+		fmt.Println(len(result))
+		if last_accessed.Valid {
+			temp_purl.Last_accessed = last_accessed.Time
+		}
+		if source_app.Valid {
+			temp_purl.Source_app = source_app.String
+		}
+		result = append(result, temp_purl)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Printf("Error on rows scan: %s", err)
 		return result
 	}
 	return result
@@ -149,7 +156,7 @@ func (sq *purldb) FindPurl(id int) Purl {
 		log.Printf("Error scanning rows: %s", err.Error())
 		return result
 	}
-	result = Purl{Id: purl_id, repo_obj_id: repo_obj_id, access_count: access_count, last_accessed: last_accessed, source_app: source_app, date_created: date_created}
+	result = Purl{Id: purl_id, Repo_obj_id: repo_obj_id, Access_count: access_count, Last_accessed: last_accessed, Source_app: source_app, Date_created: date_created}
 	// return empty if not found
 	return result
 }
@@ -174,7 +181,7 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 			log.Fatal(err)
 			return result
 		}
-		result = append(result, RepoObj{filename: filename, url: url, date_added: date_added, add_source_ip: add_source_ip, date_modified: date_modified, information: information})
+		result = append(result, RepoObj{Filename: filename, Url: url, Date_added: date_added, Add_source_ip: add_source_ip, Date_modified: date_modified, Information: information})
 	}
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
@@ -185,7 +192,7 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 
 func (sq *purldb) CreatePurl(t Purl) {
 	qstring := "INSERT INTO purl (repo_object_id, access_count, last_accessed, date_created) VALUES (?,?,?,?)"
-	_, err := sq.db.Query(qstring, t.repo_obj_id, t.access_count, t.last_accessed, t.date_created)
+	_, err := sq.db.Query(qstring, t.Repo_obj_id, t.Access_count, t.Last_accessed, t.Date_created)
 	if err != nil {
 		log.Printf("Could not insert into database: %s", err.Error())
 		return
