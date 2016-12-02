@@ -1,15 +1,21 @@
 language: go
 
 go:
- - 1.5.1
- - 1.5.3
- - 1.6
+ - 1.6.4
  - 1.7.1
-
-# env:
-#  - GO15VENDOREXPERIMENT=1
+ - 1.7.4
 
 install:
   - go get
 
-script: go build
+services:
+  - mysql
+
+env:
+  - MYSQL_CONNECTION=travis@tcp(127.0.0.1)/test
+
+before_script:
+  - mysql -e "create database IF NOT EXISTS test;" -uroot
+  - mysql -e "source test/seed_data.sql;" -uroot test
+
+script: go test -tags=mysql
