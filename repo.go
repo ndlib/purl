@@ -14,7 +14,6 @@ type Repository interface {
 	// It returns the zero Purl if there is no purl with that id.
 	FindPurl(id int) Purl
 
-	//
 	FindQuery(query string) []RepoObj
 
 	AllPurls() []Purl
@@ -123,7 +122,6 @@ func (sq *purldb) FindPurl(id int) Purl {
 		result = ScanPurlDB(row)
 	}
 
-	// return empty if not found
 	return result
 }
 
@@ -146,14 +144,13 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 	return result
 }
 
-func (sq *purldb) CreatePurl(t Purl) {
-	qstring := "INSERT INTO purl (repo_object_id, access_count, last_accessed, date_created) VALUES (?,?,?,?)"
-	_, err := sq.db.Query(qstring, t.Repo_obj_id, t.Access_count, t.Last_accessed, t.Date_created)
+func (sq *purldb) CreatePurl(t Purl) sql.Result {
+	result, err := CreatePurlDB(sq, t)
 	if err != nil {
 		log.Printf("Could not insert into database: %s", err.Error())
-		return
+		return result
 	}
-	return
+	return result
 }
 
 // func (mr *purldb) DestroyPurl(id int) error {
