@@ -47,10 +47,24 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 
 func (sq *purldb) createPurlDB(purl Purl) sql.Result {
 	var qstring string
-	qstring = "INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created) VALUES ($1, $2, $3, $4, $5, $6)"
+	qstring = "INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created) VALUES (?, ?, ?, ?, ?)"
 	result, err := sq.db.Exec(
 		qstring,
 		purl.Id, purl.Repo_obj_id, purl.Last_accessed, purl.Source_app, purl.Date_created,
+	)
+	if err != nil {
+		log.Printf("Error creating purl: %s", err.Error())
+		return result
+	}
+	return result
+}
+
+func (sq *purldb) destroyPurlDB(id int) sql.Result {
+	var qstring string
+	qstring = "delete from purl where purl_id = ?"
+	result, err := sq.db.Exec(
+		qstring,
+		id,
 	)
 	if err != nil {
 		log.Printf("Error creating purl: %s", err.Error())

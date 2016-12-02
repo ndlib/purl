@@ -91,10 +91,7 @@ func main() {
 	// log.Println("Listening on port", port)
 	// err = http.ListenAndServe(":"+port, nil)
 	// if err != nil {log.Fatal("ListenAndServe", err)}
-	err = db.Ping()
-	if err != nil {
-		log.Printf("Error pinging database: %s", err.Error())
-	}
+
 	datasource = store
 
 	router := NewRouter()
