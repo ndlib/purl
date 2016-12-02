@@ -93,7 +93,7 @@ func (mr *memoryRepo) DestroyPurl(id int) error {
 
 func (sq *purldb) AllPurls() []Purl {
 	var result []Purl
-	rows, err := QueryDB(sq, -1)
+	rows, err := sq.queryDB(-1)
 	if err != nil {
 		log.Printf("Error getting all purls: %s", err.Error())
 		return result
@@ -111,7 +111,7 @@ func (sq *purldb) AllPurls() []Purl {
 
 func (sq *purldb) FindPurl(id int) Purl {
 	result := Purl{}
-	row, err := QueryDB(sq, id)
+	row, err := sq.queryDB(id)
 	if err != nil {
 		log.Printf("Error getting purl %d purls: %s", id, err.Error())
 		return result
@@ -144,21 +144,7 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 	return result
 }
 
-func (sq *purldb) CreatePurl(t Purl) sql.Result {
-	result, err := CreatePurlDB(sq, t)
-	if err != nil {
-		log.Printf("Could not insert into database: %s", err.Error())
-		return result
-	}
-	return result
+func (sq *purldb) CreatePurl(t Purl) {
+	sq.createPurlDB(t)
+	return
 }
-
-// func (mr *purldb) DestroyPurl(id int) error {
-// 	for i, t := range mr.purls {
-// 		if t.Id == id {
-// 			mr.purls = append(mr.purls[:i], mr.purls[i+1:]...)
-// 			return nil
-// 		}
-// 	}
-// 	return fmt.Errorf("Could not find Purl with id of %d to delete", id)
-// }

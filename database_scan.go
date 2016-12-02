@@ -7,7 +7,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-func QueryDB(sq *purldb, id int) (*sql.Rows, error) {
+func (sq *purldb) queryDB(id int) (*sql.Rows, error) {
 	var qstring string
 	if id == -1 {
 		qstring = "select purl_id, repo_object_id, access_count, last_accessed, source_app, date_created from purl"
@@ -45,18 +45,18 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 	return temp_purl
 }
 
-func CreatePurlDB(sq *purldb, purl Purl) sql.Result {
-  var qstring string
-  qstring = "INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created) VALUES ($1, $2, $3, $4, $5, $6)"
-  result, err := sq.db.Exec(
-    qstring,
-    purl.Id, purl.Repo_obj_id, purl.Last_accessed, purl.Source_app, purl.Date_created
-  )
-  if err != nil {
-    log.Printf("Error creating purl: %s", err.Error())
-    return result
-  }
-  return result
+func (sq *purldb) createPurlDB(purl Purl) sql.Result {
+	var qstring string
+	qstring = "INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created) VALUES ($1, $2, $3, $4, $5, $6)"
+	result, err := sq.db.Exec(
+		qstring,
+		purl.Id, purl.Repo_obj_id, purl.Last_accessed, purl.Source_app, purl.Date_created,
+	)
+	if err != nil {
+		log.Printf("Error creating purl: %s", err.Error())
+		return result
+	}
+	return result
 }
 
 // type RepoObj struct {
@@ -86,16 +86,16 @@ func ScanRepoDB(rows *sql.Rows) RepoObj {
 	return temp_repo
 }
 
-func CreateRepoDB(sq *purldb, repo Repo) sql.Result {
-  var qstring string
-  qstring = "INSERT INTO repo_object (repo_object_id, filename, url, date_added, add_source_ip, date_modified, information) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-  result, err := sq.db.Exec(
-    qstring,
-    repo.Id, repo.Filename, repo.Url, repo.Date_added, repo.Add_source_ip, repo.Date_modified, repo.Information
-  )
-  if err != nil {
-    log.Printf("Error creating repo: %s", err.Error())
-    return result
-  }
-  return result
+func (sq *purldb) createRepoDB(repo RepoObj) sql.Result {
+	var qstring string
+	qstring = "INSERT INTO repo_object (repo_object_id, filename, url, date_added, add_source_ip, date_modified, information) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	result, err := sq.db.Exec(
+		qstring,
+		repo.Id, repo.Filename, repo.Url, repo.Date_added, repo.Add_source_ip, repo.Date_modified, repo.Information,
+	)
+	if err != nil {
+		log.Printf("Error creating repo: %s", err.Error())
+		return result
+	}
+	return result
 }
