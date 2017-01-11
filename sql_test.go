@@ -16,19 +16,19 @@ var (
 	datatest Repository
 )
 
-type Config struct {
-	General struct {
-		Port       string
-		StorageDir string
-	}
-	Mysql struct {
-		User     string
-		Password string
-		Host     string
-		Port     string
-		Database string
-	}
-}
+// type Config struct {
+// 	General struct {
+// 		Port       string
+// 		StorageDir string
+// 	}
+// 	Mysql struct {
+// 		User     string
+// 		Password string
+// 		Host     string
+// 		Port     string
+// 		Database string
+// 	}
+// }
 
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
@@ -117,13 +117,12 @@ func init() {
 		panic("MYSQL_CONNECTION not set")
 	}
 	var err_db error
-	var err_ping error
 	mysqldb, err_db = sql.Open("mysql", mysqlconn+"?parseTime=true")
 	if err_db != nil {
-		panic(err)
+		panic(err_db)
 	}
 	err_ping := mysqldb.Ping()
 	if err_ping != nil {
-		log.Printf("Error pinging database: %s", err.Error())
+		log.Printf("Error pinging database: %s", err_ping.Error())
 	}
 }
