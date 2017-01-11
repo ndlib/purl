@@ -102,14 +102,17 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	mysqlconn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		config.Mysql.User,
-		config.Mysql.Password,
-		config.Mysql.Host,
-		config.Mysql.Port,
-		config.Mysql.Database,
+	// config
+	var (
+		mysqlconn string
+		config Config
 	)
-	// mysqlconn := os.Getenv("MYSQL_CONNECTION")
+	err := gcfg.ReadFileInto(&config, "config.gcfg")
+	if err != nil {
+		panic(err)
+	}
+	// mysqlconn = fmt.Sprintf("travis@tcp(127.0.0.1:3600)/test_database?parseTime=true")
+	mysqlconn := os.Getenv("MYSQL_CONNECTION")
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
