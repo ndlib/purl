@@ -107,22 +107,23 @@ func init() {
 		mysqlconn string
 		config Config
 	)
-	err := gcfg.ReadFileInto(&config, "config.gcfg")
-	if err != nil {
-		panic(err)
-	}
+	// err := gcfg.ReadFileInto(&config, "config.gcfg")
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// mysqlconn = fmt.Sprintf("travis@tcp(127.0.0.1:3600)/test_database?parseTime=true")
-	mysqlconn := os.Getenv("MYSQL_CONNECTION")
+	mysqlconn = os.Getenv("MYSQL_CONNECTION")
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
-	var err error
-	mysqldb, err = sql.Open("mysql", mysqlconn+"?parseTime=true")
-	if err != nil {
+	var err_db error
+	var err_ping error
+	mysqldb, err_db = sql.Open("mysql", mysqlconn+"?parseTime=true")
+	if err_db != nil {
 		panic(err)
 	}
-	err = mysqldb.Ping()
-	if err != nil {
+	err_ping := mysqldb.Ping()
+	if err_ping != nil {
 		log.Printf("Error pinging database: %s", err.Error())
 	}
 }
