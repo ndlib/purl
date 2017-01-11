@@ -16,20 +16,6 @@ var (
 	datatest Repository
 )
 
-// type Config struct {
-// 	General struct {
-// 		Port       string
-// 		StorageDir string
-// 	}
-// 	Mysql struct {
-// 		User     string
-// 		Password string
-// 		Host     string
-// 		Port     string
-// 		Database string
-// 	}
-// }
-
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
@@ -105,7 +91,6 @@ func init() {
 	// config
 	var (
 		mysqlconn string
-		config Config
 	)
 	// err := gcfg.ReadFileInto(&config, "config.gcfg")
 	// if err != nil {
@@ -125,4 +110,5 @@ func init() {
 	if err_ping != nil {
 		log.Printf("Error pinging database: %s", err_ping.Error())
 	}
+	// defer mysqldb.Close()
 }
