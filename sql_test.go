@@ -97,7 +97,7 @@ func init() {
 	// 	panic(err)
 	// }
 	// mysqlconn = fmt.Sprintf("travis@tcp(127.0.0.1:3600)/test_database?parseTime=true")
-	mysqlconn = os.Getenv("MYSQL_CONNECTION")
+	mysqlconn = "travis@tcp(127.0.0.1:3306)/test"
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
