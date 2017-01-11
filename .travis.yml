@@ -1,21 +1,18 @@
 language: go
-
 go:
- - 1.6.4
- - 1.7.1
- - 1.7.4
-
+- 1.6.4
+- 1.7.1
+- 1.7.4
 install:
-  - go get
-
+- go get
 services:
-  - mysql
-
+- mysql
 env:
-  - MYSQL_CONNECTION=travis@tcp(127.0.0.1)/test
-
+- MYSQL_CONNECTION=travis@tcp(127.0.0.1)/test
 before_script:
-  - mysql -e "create database IF NOT EXISTS test;" -uroot
-  - mysql -e "source test/seed_data.sql;" -uroot test
-
+- mysql -e "create database IF NOT EXISTS test;" -uroot
+- mysql -e "source test/seed_data.sql;" -uroot test
 script: go test -tags=mysql
+before_install:
+- openssl aes-256-cbc -K $encrypted_c64a6164d3a8_key -iv $encrypted_c64a6164d3a8_iv
+  -in config.gcfg.enc -out config.gcfg -d
