@@ -16,6 +16,20 @@ var (
 	datatest Repository
 )
 
+type Config struct {
+	General struct {
+		Port       string
+		StorageDir string
+	}
+	Mysql struct {
+		User     string
+		Password string
+		Host     string
+		Port     string
+		Database string
+	}
+}
+
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
@@ -88,7 +102,14 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	mysqlconn := os.Getenv("MYSQL_CONNECTION")
+	mysqlconn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		config.Mysql.User,
+		config.Mysql.Password,
+		config.Mysql.Host,
+		config.Mysql.Port,
+		config.Mysql.Database,
+	)
+	// mysqlconn := os.Getenv("MYSQL_CONNECTION")
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
