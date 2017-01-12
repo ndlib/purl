@@ -52,10 +52,9 @@ func updateWait(wait int) int {
 	return wait
 }
 
-func NewDBSource(db *sql.DB, mysqlconn string) (*sql.DB, *purldb) {
+func NewDBSource(mysqlconn string) *purldb {
 	mysqlconn = mysqlconn + "?parseTime=true"
-	var err error
-	db, err = sql.Open("mysql", mysqlconn)
+	db, err := sql.Open("mysql", mysqlconn)
 	if err != nil {
 		log.Printf("Error setting up database connection: %s", err.Error())
 		panic(err)
@@ -70,7 +69,7 @@ func NewDBSource(db *sql.DB, mysqlconn string) (*sql.DB, *purldb) {
 			wait = updateWait(wait)
 		}
 	}
-	return db, &purldb{db: db}
+	return &purldb{db: db}
 }
 
 func (sq *purldb) queryDB(id int) (*sql.Rows, error) {

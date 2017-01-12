@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -11,7 +9,6 @@ import (
 )
 
 var (
-	mysqldb *sql.DB
 	source  *purldb
 )
 
@@ -89,9 +86,5 @@ func init() {
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
-	mysqldb, source = NewDBSource(mysqldb, mysqlconn)
-	err_ping := mysqldb.Ping()
-	if err_ping != nil {
-		log.Printf("Error pinging database: %s", err_ping.Error())
-	}
+	source = NewDBSource(mysqlconn)
 }

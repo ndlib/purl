@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"database/sql"
-
 	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/gcfg.v1"
 )
@@ -49,17 +47,10 @@ func main() {
 		config.Mysql.Host,
 		config.Mysql.Port,
 		config.Mysql.Database,
-	)
+	) // "root@tcp(127.0.0.1:3306)/test"
 
-	// Connect to mysql database
-	var (
-		source *purldb
-		db     *sql.DB
-	)
-	db, source = NewDBSource(db, mysqlLocation)
-	defer db.Close()
-
-	datasource = source
+	datasource = NewDBSource(mysqlLocation)
+	// defer datasource.purldb.db.Close()
 
 	router := NewRouter()
 
