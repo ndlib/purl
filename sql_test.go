@@ -15,10 +15,6 @@ var (
 	source *purldb
 )
 
-var (
-	datatest Repository
-)
-
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
