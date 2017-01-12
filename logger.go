@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type jsonErr struct {
+	Code int    `json:"code"`
+	Text string `json:"text"`
+}
+
 func Logger(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

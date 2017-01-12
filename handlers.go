@@ -18,7 +18,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(datasource.AllPurls()); err != nil {
+	ps := datasource.AllPurls()
+	if err := json.NewEncoder(w).Encode(ps); err != nil {
 		panic(err)
 	}
 }
@@ -106,7 +107,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 /*
 Test with this curl command:
 
-curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/todos
+curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/purl/create
 
 */
 func PurlCreate(w http.ResponseWriter, r *http.Request) {
@@ -126,10 +127,7 @@ func PurlCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t := datasource.CreatePurl(purl)
+	datasource.CreatePurl(purl)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(t); err != nil {
-		panic(err)
-	}
 }
