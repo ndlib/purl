@@ -8,21 +8,9 @@ import (
 	"sync"
 )
 
-// A Repository stores the purls we know about.
-type Repository interface {
-	// FindPurl returns information about the given purl identifier.
-	// It returns the zero Purl if there is no purl with that id.
-	FindPurl(id int) Purl
-
-	FindQuery(query string) []RepoObj
-
-	AllPurls() []Purl
-
-	CreatePurl(t Purl)
-}
-
+// store pointer to sql database
 type purldb struct {
-	db *sql.DB // store pointer to sql database
+	db *sql.DB
 }
 
 // A MemoryRepo is a Repository that keeps everything in memory.
@@ -38,6 +26,19 @@ type memoryRepo struct {
 
 	// list of repository resources
 	repos Repos
+}
+
+// A Repository stores the purls we know about.
+type Repository interface {
+	// FindPurl returns information about the given purl identifier.
+	// It returns the zero Purl if there is no purl with that id.
+	FindPurl(id int) Purl
+
+	FindQuery(query string) []RepoObj
+
+	AllPurls() []Purl
+
+	CreatePurl(t Purl)
 }
 
 func (mr *memoryRepo) AllPurls() []Purl {
@@ -91,6 +92,9 @@ func (mr *memoryRepo) DestroyPurl(id int) error {
 	return fmt.Errorf("Could not find Purl with id of %d to delete", id)
 }
 
+// Queries the database for all purls and
+// returns an empty object if there is an
+// error
 func (sq *purldb) AllPurls() []Purl {
 	var result []Purl
 	rows, err := sq.queryDB(-1)
@@ -117,17 +121,15 @@ func (sq *purldb) FindPurl(id int) Purl {
 		return result
 	}
 	defer row.Close()
-
 	for row.Next() {
 		result = ScanPurlDB(row)
 	}
-
 	return result
 }
 
 func (sq *purldb) FindQuery(query string) []RepoObj {
 	var result []RepoObj
-	qstring := "select filename, url, date_added, add_source_ip, date_modified, information from repo_object where repo_object.information = ?"
+	qstring := "SELECT filename, url, date_added, add_source_ip, date_modified, information from repo_object where repo_object.information CONTAINS ?"
 	rows, err := sq.db.Query(qstring, query)
 	if err != nil {
 		log.Printf("Error getting all purls: %s", err.Error())

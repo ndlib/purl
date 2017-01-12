@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -87,16 +88,8 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	// config
-	var (
-		mysqlconn string
-	)
-	// err := gcfg.ReadFileInto(&config, "config.gcfg")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// mysqlconn = fmt.Sprintf("travis@tcp(127.0.0.1:3600)/test_database?parseTime=true")
-	mysqlconn = "travis@tcp(127.0.0.1:3306)/test"
+	var mysqlconn string
+	mysqlconn = os.Getenv("MYSQL_CONNECTION")
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
@@ -109,5 +102,4 @@ func init() {
 	if err_ping != nil {
 		log.Printf("Error pinging database: %s", err_ping.Error())
 	}
-	// defer mysqldb.Close()
 }

@@ -32,25 +32,15 @@ type Config struct {
 
 func main() {
 
-	// repo := &memoryRepo{}
-	// Give us some seed data
-	// repo.CreatePurl(Purl{source_app: "Library"})
-	// repo.CreatePurl(Purl{source_app: "Code School"})
-
 	// config
 	var (
-		// port          string
-		// storageDir    string
-		// logfilename   string
-		// sqliteFile    string
 		mysqlLocation string
-		// showVersion   bool
-		// configFile    string
 		config Config
 	)
 	err := gcfg.ReadFileInto(&config, "config.gcfg")
 	if err != nil {
 		panic(err)
+		log.Printf("Error getting config information: %s", err.Error())
 	}
 
 	// mySql information for login

@@ -7,6 +7,14 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+type dbObj struct {
+	db *sql.DB // store pointer to sql database
+}
+
+func NewDBFileStore(db *sql.DB) *purldb {
+	return &purldb{db: db}
+}
+
 func (sq *purldb) queryDB(id int) (*sql.Rows, error) {
 	var qstring string
 	if id == -1 {
@@ -17,16 +25,6 @@ func (sq *purldb) queryDB(id int) (*sql.Rows, error) {
 		return sq.db.Query(qstring, id)
 	}
 }
-
-// type Purl struct {
-// 	Id            int       `json:"id"`
-// 	repo_obj_id   string    `json:"repo_obj_id"`
-// 	access_count  int       `json:"access_count"`
-// 	last_accessed time.Time `json:"last_accessed"`
-// 	source_app    string    `json:"source_app"`
-// 	date_created  time.Time `json:"date_created"`
-// }
-// refernce to purldb
 
 func ScanPurlDB(rows *sql.Rows) Purl {
 	var temp_purl Purl
@@ -47,7 +45,10 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 
 func (sq *purldb) createPurlDB(purl Purl) sql.Result {
 	var qstring string
-	qstring = "INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created) VALUES (?, ?, ?, ?, ?)"
+	qstring = `INSERT INTO purl
+	(purl_id, repo_object_id, last_accessed, source_app, date_created)
+	VALUES
+	(?, ?, ?, ?, ?)`
 	result, err := sq.db.Exec(
 		qstring,
 		purl.Id, purl.Repo_obj_id, purl.Last_accessed, purl.Source_app, purl.Date_created,
@@ -73,21 +74,12 @@ func (sq *purldb) destroyPurlDB(id int) sql.Result {
 	return result
 }
 
-// type RepoObj struct {
-// 	Id            int       `json:"id"`
-// 	Filename      string    `json:"filename"`
-// 	Url           string    `json:"filename"`
-// 	Date_added    time.Time `json:"date_added"`
-// 	Add_source_ip string    `json:"add_source_ip"`
-// 	Date_modified time.Time `json:"date_modified"`
-// 	Information   string    `json:"information"`
-// }
-
 func ScanRepoDB(rows *sql.Rows) RepoObj {
 	var temp_repo RepoObj
 	var date_modified mysql.NullTime
 	var information sql.NullString
-	err := rows.Scan(&temp_repo.Id, &temp_repo.Filename, &temp_repo.Url, &temp_repo.Date_added, &temp_repo.Add_source_ip, &date_modified, &information)
+	err := rows.Scan(&temp_repo.Id, &temp_repo.Filename, &temp_repo.Url, &temp_repo.Date_added,
+		&temp_repo.Add_source_ip, &date_modified, &information)
 	if err != nil {
 		log.Printf("Scan not succeded: %s", err)
 	}
@@ -102,7 +94,10 @@ func ScanRepoDB(rows *sql.Rows) RepoObj {
 
 func (sq *purldb) createRepoDB(repo RepoObj) sql.Result {
 	var qstring string
-	qstring = "INSERT INTO repo_object (repo_object_id, filename, url, date_added, add_source_ip, date_modified, information) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	qstring = `INSERT INTO repo_object
+	(repo_object_id, filename, url, date_added, add_source_ip, date_modified, information)
+	VALUES
+	($1, $2, $3, $4, $5, $6, $7)`
 	result, err := sq.db.Exec(
 		qstring,
 		repo.Id, repo.Filename, repo.Url, repo.Date_added, repo.Add_source_ip, repo.Date_modified, repo.Information,
