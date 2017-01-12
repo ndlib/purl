@@ -1,0 +1,57 @@
+on [GET|HEAD] for the route /view/{id}/{filename}
+
+PURL = find_purl(id)
+
+BACK_END = PURL->repository_object->URL
+if PURL->repository_object->information matches /^(CurateND - |Reformatting Unit:)/ {
+    PURL->update( inc access_count )
+    PURL->update( set last_accessed to Now())
+    redirect 302 to BACK_END
+    stop
+}
+
+# add fedora username and password to URL
+
+BACK_END_NEW = s/http(s):\/\/(.+)/http$1:\/\/fedorausername:fedorapassword\/$2/
+
+send HEAD to BACK_END_NEW with agent = "Library PURL Service" and ssl_opts { verify_hostname = 0 }
+
+response_object is response to HEAD
+
+if 200 response to HEAD then
+  inc access count
+  set last accessed to now()
+  create an access record:
+    ip address is request address if there, otherwise is 0.0.0.0
+    hostname is request hostname if there, otherwise "not available"
+    referer is request referer if there, otherwise "not available"
+    useragent is request useragent if there, otherwise "not available"
+    method is request method if there, otherwise "not available"
+    pathinfo is reqest path info if there, otherwise "not available"
+    dateaccessed is now()
+    repo_object id is PURL->repository_object->repo_object_id
+    purl_id is PURL->purl_id
+  end
+else
+  log response_object->status_line
+end
+
+if response_object->content_length > 1 then
+  set our response content length to response_object->content_length
+else if response_object->content_length < 0 then
+  # fedora does not handle large file sizes correctly in HEAD requests to the legacy API.
+  # un 2s-complement the number for it.
+  set our response content length to 2**32 + response_object->content_length
+end
+
+set our response content type to response_object->("Content-Type")
+
+set filename to PURL->repository_object->filename
+if filename ends with "vmdk" or "zip" or"ovf" then
+  set our Content-Disposition to "attachment; filename=$filename"
+else
+  set out Content-Disposition to "inline; filename=$filename"
+end
+
+do GET request and stream content back to requestor.
+
