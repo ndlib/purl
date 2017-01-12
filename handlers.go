@@ -19,16 +19,9 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	ps := datasource.AllPurls()
-	// fmt.Printf(ps[0]["Id"])
-	// for p := range ps {
-	// purl, pan_err := json.Marshal(ps[p])
-	// if pan_err != nil {
-	// 	log.Printf("Error on Marshal: %s", pan_err.Error())
-	// }
 	if err := json.NewEncoder(w).Encode(ps); err != nil {
 		panic(err)
 	}
-	// }
 }
 
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +107,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 /*
 Test with this curl command:
 
-curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/todos
+curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/purl/create
 
 */
 func PurlCreate(w http.ResponseWriter, r *http.Request) {

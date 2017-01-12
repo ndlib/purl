@@ -10,7 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var mysqldb *sql.DB
+var (
+	mysqldb *sql.DB
+	source *purldb
+)
 
 var (
 	datatest Repository
@@ -20,11 +23,10 @@ func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
 	var purltestdb *purldb
-	purltestdb = NewDBFileStore(mysqldb)
+	purltestdb = source
 
 	result := purltestdb.AllPurls()
 
-	// assert.Equal(len(result), 10, "We should have ten repos in the database")
 	for _, res := range result {
 		assert.NotEqual(res.Date_created, time.Time{}, "Time incorrectly set on repo")
 		assert.NotEqual(res.Id, nil, "Id nil")
@@ -35,10 +37,9 @@ func TestFindPurl(t *testing.T) {
 	assert := assert.New(t)
 
 	var purltestdb *purldb
-	purltestdb = NewDBFileStore(mysqldb)
+	purltestdb = source
 	result := purltestdb.FindPurl(5)
 
-	// assert.Equal(len(result), 10, "We should have ten repos in the database")
 	assert.NotEqual(result.Date_created, time.Time{}, "Time incorrectly set on repo")
 	assert.NotEqual(result.Id, nil, "Id nil")
 
@@ -74,7 +75,7 @@ func TestCreatePurl(t *testing.T) {
 	}
 
 	var purltestdb *purldb
-	purltestdb = NewDBFileStore(mysqldb)
+	purltestdb = source
 	_ = purltestdb.createPurlDB(newpurl)
 
 	result := purltestdb.FindPurl(11)
@@ -93,11 +94,7 @@ func init() {
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}
-	var err_db error
-	mysqldb, err_db = sql.Open("mysql", mysqlconn+"?parseTime=true")
-	if err_db != nil {
-		panic(err_db)
-	}
+	mysqldb, source = NewDBSource(mysqldb, mysqlconn+"?parseTime=true")
 	err_ping := mysqldb.Ping()
 	if err_ping != nil {
 		log.Printf("Error pinging database: %s", err_ping.Error())

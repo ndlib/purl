@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"database/sql"
 
@@ -39,8 +38,8 @@ func main() {
 	)
 	err := gcfg.ReadFileInto(&config, "config.gcfg")
 	if err != nil {
-		panic(err)
 		log.Printf("Error getting config information: %s", err.Error())
+		panic(err)
 	}
 
 	// mySql information for login
@@ -54,35 +53,13 @@ func main() {
 
 	// Connect to mysql database
 	var (
-		store *purldb
+		source *purldb
 		db    *sql.DB
-		// errDB error
 	)
-	db, err = sql.Open("mysql", mysqlLocation)
-	fmt.Println(mysqlLocation)
-	if err != nil {
-		log.Printf("Error opening database: %s", err.Error())
-	}
+	db, source = NewDBSource(db, mysqlLocation)
 	defer db.Close()
-	if db != nil {
-		var wait = 1
-		store = NewDBFileStore(db)
-		for store == nil {
-			log.Printf("Problem loading pools from database. Trying again in %d seconds", wait)
-			time.Sleep(time.Duration(wait) * time.Second)
-			wait *= 2
-			if wait > 300 {
-				wait = 300
-			}
-			store = NewDBFileStore(db)
-		}
-	}
-	// SetupHandlers(store)
-	// log.Println("Listening on port", port)
-	// err = http.ListenAndServe(":"+port, nil)
-	// if err != nil {log.Fatal("ListenAndServe", err)}
 
-	datasource = store
+	datasource = source
 
 	router := NewRouter()
 
