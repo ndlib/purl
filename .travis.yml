@@ -15,6 +15,3 @@ before_script:
   - mysql -e "create database IF NOT EXISTS test;" -uroot
   - mysql -e "source test/seed_data.sql;" -uroot test
 script: go test -tags=mysql
-before_install:
-  - openssl aes-256-cbc -K $encrypted_c64a6164d3a8_key -iv $encrypted_c64a6164d3a8_iv
-    -in config.gcfg.enc -out config.gcfg -d

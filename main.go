@@ -50,7 +50,6 @@ func main() {
 	) // "root@tcp(127.0.0.1:3306)/test"
 
 	datasource = NewDBSource(mysqlLocation)
-	// defer datasource.purldb.db.Close()
 
 	router := NewRouter()
 
