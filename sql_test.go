@@ -89,8 +89,7 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	var mysqlconn string
-	mysqlconn = os.Getenv("MYSQL_CONNECTION")
+	mysqlconn := os.Getenv("MYSQL_CONNECTION")
 	if mysqlconn == "" {
 		panic("MYSQL_CONNECTION not set")
 	}

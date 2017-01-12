@@ -44,10 +44,6 @@ type Repository interface {
 	CreatePurl(t Purl)
 }
 
-type dbObj struct {
-	db *sql.DB // store pointer to sql database
-}
-
 func updateWait(wait int) int {
 	wait *= 2
 	if wait > 300 {
