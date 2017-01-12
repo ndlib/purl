@@ -34,7 +34,7 @@ func main() {
 	// config
 	var (
 		mysqlLocation string
-		config Config
+		config        Config
 	)
 	err := gcfg.ReadFileInto(&config, "config.gcfg")
 	if err != nil {
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// mySql information for login
-	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 		config.Mysql.User,
 		config.Mysql.Password,
 		config.Mysql.Host,
@@ -54,7 +54,7 @@ func main() {
 	// Connect to mysql database
 	var (
 		source *purldb
-		db    *sql.DB
+		db     *sql.DB
 	)
 	db, source = NewDBSource(db, mysqlLocation)
 	defer db.Close()

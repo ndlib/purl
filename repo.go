@@ -53,18 +53,23 @@ func updateWait(wait int) int {
 }
 
 func NewDBSource(db *sql.DB, mysqlconn string) (*sql.DB, *purldb) {
+	mysqlconn = mysqlconn + "?parseTime=true"
 	var err error
 	db, err = sql.Open("mysql", mysqlconn)
+	if err != nil {
+		log.Printf("Error setting up database connection: %s", err.Error())
+		panic(err)
+	}
+	err = db.Ping()
 	if err != nil {
 		var wait = 1
 		for err != nil {
 			log.Printf("Error opening database: %s", err.Error())
-			db, err = sql.Open("mysql", mysqlconn)
+			err = db.Ping()
 			time.Sleep(time.Duration(wait) * time.Second)
 			wait = updateWait(wait)
 		}
 	}
-	db.Ping()
 	return db, &purldb{db: db}
 }
 
@@ -122,7 +127,6 @@ func (sq *purldb) destroyPurlDB(id int) sql.Result {
 	)
 	if err != nil {
 		log.Printf("Error creating purl: %s", err.Error())
-		return result
 	}
 	return result
 }
@@ -158,7 +162,6 @@ func (sq *purldb) createRepoDB(repo RepoObj) sql.Result {
 	)
 	if err != nil {
 		log.Printf("Error creating repo: %s", err.Error())
-		return result
 	}
 	return result
 }
