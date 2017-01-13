@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"regexp"
 
 	"github.com/gorilla/mux"
 )
@@ -86,12 +87,61 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
 		panic(err)
 	}
+	var filename string
+	if filename, err = strconv.Atoi(vars["filename"]); err != nil {
+		panic(err)
+	}
 	purl := datasource.FindPurl(purlId)
 	if purl.Id > 0 {
+		repo := datasource.FindRepoObj(purl.Repo_object_id)
+		if repo.Id != purl.Repo_object_id {
+			log.Printf("Could not return correct repo object")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		re, err := regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+		if err != nil {
+			log.Printf("Problem with regex: %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		matched, _ := re.MatchString(repo.information)
+		if matched == true {
+			http.Redirect(w, r, newUrl, 302)
+			return
+		}
+		re, err := regexp.MustCompile(`http(s):\/\/(.+)`)
+		if err != nil {
+			log.Printf("Problem with regex: %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fedorausername = "user"
+		fedorapassword = "pass"
+		repl = `http$1:\/\/`+fedorausername+`:`+fedorapassword+`\/$2`
+		back_end_new := re.ReplaceAllString(repo.url, repl)
+
+		resp, err := http.Get(back_end_new)
+		if err != nil {
+			log.Printf("Unable to grab file: %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		datasource.LogRecordAccess(r, repo.Id, purl.Id)
+
+		if r.ContentLength > 1 {
+			con_length := r.ContentLength
+		} elif (r.ContentLength < 0){
+			con_length = uint64(math.Pow(float64(2), float64(32))) + r.ContentLength
+		}
+
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(purl); err != nil {
-			panic(err)
+			log.Printf("Json encoding error: %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
