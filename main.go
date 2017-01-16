@@ -47,7 +47,8 @@ func main() {
 		config.Mysql.Host,
 		config.Mysql.Port,
 		config.Mysql.Database,
-	) // "root@tcp(127.0.0.1:3306)/test"
+	) //
+	mysqlLocation = "root@tcp(127.0.0.1:3306)/test"
 
 	datasource = NewDBSource(mysqlLocation)
 

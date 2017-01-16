@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -45,7 +46,7 @@ type Repository interface {
 
 	FindRepoObj(id int) RepoObj
 
-	LogRecordAccess(vars map[string]string, repo_id int, p_id int)
+	LogRecordAccess(vars *http.Request, repo_id int, p_id int)
 }
 
 func updateWait(wait int) int {
@@ -206,7 +207,7 @@ func (sq *purldb) AllPurls() []Purl {
 }
 
 func (sq *purldb) queryPurlDB(id int) (*sql.Rows, error) {
-	return queryDB(id, "purl", "purl_id")
+	return sq.queryDB(id, "purl", "purl_id")
 	// var qstring string
 	// if id == -1 {
 	// 	qstring = "select purl_id, repo_object_id, access_count, last_accessed, source_app, date_created from purl"
@@ -225,7 +226,7 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 	var source_app sql.NullString
 	err := rows.Scan(
 		&temp_purl.Id, &temp_purl.Repo_obj_id, &temp_purl.Access_count,
-		&last_accessed, &source_app, &temp_purl.Date_created
+		&last_accessed, &source_app, &temp_purl.Date_created,
 	)
 	if err != nil {
 		log.Printf("Scan not succeded: %s", err)
@@ -256,7 +257,7 @@ func (sq *purldb) FindPurl(id int) Purl {
 
 // REPO OBJECT RETRIEVAL
 func (sq *purldb) queryRepoDB(id int) (*sql.Rows, error) {
-	return queryDB(id, "repo_object", "repo_object_id")
+	return sq.queryDB(id, "repo_object", "repo_object_id")
 	// var qstring string
 	// if id == -1 {
 	// 	qstring = "select * from repo_object"
@@ -334,14 +335,17 @@ func (sq *purldb) LogRecordAccess(r *http.Request, repo_id int, p_id int) {
 	(now(),?,?,?,?,?,?,?,?)`
 	ip_address := r.RemoteAddr
 	host_name := r.Host
-	referer := http.Referer(r)
-	user_agent := http.UserAgent(r)
+	referer := r.Referer()
+	user_agent := r.UserAgent()
 	request_method := r.Method
 	path_info := r.URL.Path
 	repo_object_id := repo_id
 	purl_id := p_id
-	sq.db.Exec(
-		upstring,
-
+	_, err := sq.db.Exec(
+		upstring, ip_address, host_name, referer, user_agent,
+		request_method, path_info, repo_object_id, purl_id,
 	)
+	if err != nil {
+		log.Printf("Problem updating access to database: %s", err.Error())
+	}
 }

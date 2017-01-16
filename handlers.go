@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"math"
 	"net/http"
-	"strconv"
 	"regexp"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -87,39 +89,39 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
 		panic(err)
 	}
-	var filename string
-	if filename, err = strconv.Atoi(vars["filename"]); err != nil {
-		panic(err)
-	}
+	// var filename string
+	// filename := vars["filename"]
 	purl := datasource.FindPurl(purlId)
 	if purl.Id > 0 {
-		repo := datasource.FindRepoObj(purl.Repo_object_id)
-		if repo.Id != purl.Repo_object_id {
+		repo_id, _ := strconv.Atoi(purl.Repo_obj_id)
+		repo := datasource.FindRepoObj(repo_id)
+		if repo.Id != repo_id {
 			log.Printf("Could not return correct repo object")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		re, err := regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+		re := regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
 		if err != nil {
 			log.Printf("Problem with regex: %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		matched, _ := re.MatchString(repo.information)
+		matched := re.MatchString(repo.Information)
 		if matched == true {
-			http.Redirect(w, r, newUrl, 302)
+			datasource.LogRecordAccess(r, repo.Id, purl.Id)
+			http.Redirect(w, r, repo.Url, 302)
 			return
 		}
-		re, err := regexp.MustCompile(`http(s):\/\/(.+)`)
+		re = regexp.MustCompile(`http(s):\/\/(.+)`)
 		if err != nil {
 			log.Printf("Problem with regex: %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fedorausername = "user"
-		fedorapassword = "pass"
-		repl = `http$1:\/\/`+fedorausername+`:`+fedorapassword+`\/$2`
-		back_end_new := re.ReplaceAllString(repo.url, repl)
+		// fedorausername := "user"
+		// fedorapassword := "pass"
+		repl := `http$1:///$2` //` + fedorausername + `:` + fedorapassword + `
+		back_end_new := re.ReplaceAllString(repo.Url, repl)
 
 		resp, err := http.Get(back_end_new)
 		if err != nil {
@@ -128,23 +130,38 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		// body, err := ioutil.ReadAll(resp.Body)
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
 		if r.ContentLength > 1 {
-			con_length := r.ContentLength
-		} elif (r.ContentLength < 0){
-			con_length = uint64(math.Pow(float64(2), float64(32))) + r.ContentLength
+			w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
+		} else if r.ContentLength < 0 {
+			con_length := int64(math.Pow(float64(2), float64(32))) + r.ContentLength
+			w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		filename := vars["filename"]
+		re = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+		if re.MatchString(filename) {
+			file_value := "attachment; filename=$" + filename
+			w.Header().Set("Content-Disposition", file_value)
+		} else {
+			file_value := "inline; filename=$" + filename
+			w.Header().Set("Content-Disposition", file_value)
+		}
+		w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
 		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(purl); err != nil {
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := json.NewEncoder(w).Encode(b); err != nil {
 			log.Printf("Json encoding error: %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
+
 	// If we didn't find it, 404
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)

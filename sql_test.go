@@ -1,3 +1,5 @@
+// +build mysql
+
 package main
 
 import (
@@ -9,7 +11,7 @@ import (
 )
 
 var (
-	source  *purldb
+	source *purldb
 )
 
 func TestAllPurls(t *testing.T) {
