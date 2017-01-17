@@ -82,45 +82,66 @@ func Query(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func setResponseContent(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+	vars := mux.Vars(r)
+
+	if r.ContentLength > 1 {
+		w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
+	} else if r.ContentLength < 0 {
+		con_length := int64(math.Pow(float64(2), float64(32))) + r.ContentLength
+		w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
+	}
+
+	filename := vars["filename"]
+	re := regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+	if re.MatchString(filename) {
+		file_value := "attachment; filename=$" + filename
+		w.Header().Set("Content-Disposition", file_value)
+	} else {
+		file_value := "inline; filename=$" + filename
+		w.Header().Set("Content-Disposition", file_value)
+	}
+	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	w.WriteHeader(http.StatusOK)
+	return w
+}
+
 func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	var purlId int
-	var err error
+	var (
+		purlId int
+		err    error
+	)
+
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
-		panic(err)
+		log.Println(err)
+		return
 	}
-	// var filename string
-	// filename := vars["filename"]
+
 	purl := datasource.FindPurl(purlId)
+
 	if purl.Id > 0 {
 		repo_id, _ := strconv.Atoi(purl.Repo_obj_id)
 		repo := datasource.FindRepoObj(repo_id)
+
 		if repo.Id != repo_id {
 			log.Printf("Could not return correct repo object")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		re := regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
-		if err != nil {
-			log.Printf("Problem with regex: %s", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		matched := re.MatchString(repo.Information)
-		if matched == true {
+
+		// if we cannot proxy the file redirect to it
+		if regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`).MatchString(repo.Information) {
 			datasource.LogRecordAccess(r, repo.Id, purl.Id)
 			http.Redirect(w, r, repo.Url, 302)
 			return
 		}
-		re = regexp.MustCompile(`http(s):\/\/(.+)`)
-		if err != nil {
-			log.Printf("Problem with regex: %s", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+
+		// Add permissions to our url request
+		re := regexp.MustCompile(`http(s):\/\/(.+)`)
 		// fedorausername := "user"
 		// fedorapassword := "pass"
-		repl := `http$1:///$2` //` + fedorausername + `:` + fedorapassword + `
+		repl := `http$1://$2` //` + fedorausername + `:` + fedorapassword + `
 		back_end_new := re.ReplaceAllString(repo.Url, repl)
 
 		resp, err := http.Get(back_end_new)
@@ -130,34 +151,14 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer resp.Body.Close()
-		// body, err := ioutil.ReadAll(resp.Body)
+
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
-		if r.ContentLength > 1 {
-			w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
-		} else if r.ContentLength < 0 {
-			con_length := int64(math.Pow(float64(2), float64(32))) + r.ContentLength
-			w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
-		}
+		w = setResponseContent(w, r)
 
-		filename := vars["filename"]
-		re = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
-		if re.MatchString(filename) {
-			file_value := "attachment; filename=$" + filename
-			w.Header().Set("Content-Disposition", file_value)
-		} else {
-			file_value := "inline; filename=$" + filename
-			w.Header().Set("Content-Disposition", file_value)
-		}
-		w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-		w.WriteHeader(http.StatusOK)
-		b, err := ioutil.ReadAll(resp.Body)
+		_, err = io.Copy(w, resp.Body)
 		if err != nil {
-			log.Fatal(err)
-		}
-		if err := json.NewEncoder(w).Encode(b); err != nil {
-			log.Printf("Json encoding error: %s", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Println(err)
 		}
 		return
 	}

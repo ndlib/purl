@@ -188,6 +188,16 @@ func (sq *purldb) queryDB(id int, table string, table_id string) (*sql.Rows, err
 	}
 }
 
+// PURL OBJECT RETRIEVAL
+func (sq *purldb) queryPurlDB(id int) (*sql.Rows, error) {
+	return sq.queryDB(id, "purl", "purl_id")
+}
+
+// REPO OBJECT RETRIEVAL
+func (sq *purldb) queryRepoDB(id int) (*sql.Rows, error) {
+	return sq.queryDB(id, "repo_object", "repo_object_id")
+}
+
 func (sq *purldb) AllPurls() []Purl {
 	var result []Purl
 	rows, err := sq.queryPurlDB(-1)
@@ -204,20 +214,6 @@ func (sq *purldb) AllPurls() []Purl {
 		return result
 	}
 	return result
-}
-
-func (sq *purldb) queryPurlDB(id int) (*sql.Rows, error) {
-	return sq.queryDB(id, "purl", "purl_id")
-	// var qstring string
-	// if id == -1 {
-	// 	qstring = "select purl_id, repo_object_id, access_count, last_accessed, source_app, date_created from purl"
-	// 	return sq.db.Query(qstring)
-	// } else {
-	// 	qstring = "select purl_id, repo_object_id, access_count, last_accessed, source_app, date_created from purl where purl_id = ?"
-	// 	upstring = "UPDATE purl SET access_count = access_count + 1, last_accessed = NOW()"
-	// 	_, _ = sq.db.Query(upstring, id)
-	// 	return sq.db.Query(qstring, id)
-	// }
 }
 
 func ScanPurlDB(rows *sql.Rows) Purl {
@@ -253,19 +249,6 @@ func (sq *purldb) FindPurl(id int) Purl {
 		result = ScanPurlDB(row)
 	}
 	return result
-}
-
-// REPO OBJECT RETRIEVAL
-func (sq *purldb) queryRepoDB(id int) (*sql.Rows, error) {
-	return sq.queryDB(id, "repo_object", "repo_object_id")
-	// var qstring string
-	// if id == -1 {
-	// 	qstring = "select * from repo_object"
-	// 	return sq.db.Query(qstring)
-	// } else {
-	// 	qstring = "select * from repo_object where repo_object.repo_object_id = ?"
-	// 	return sq.db.Query(qstring, id)
-	// }
 }
 
 func ScanRepoDB(rows *sql.Rows) RepoObj {
