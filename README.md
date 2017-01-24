@@ -7,6 +7,9 @@ all urls and serving them
 statically to an admin with
 access to the application
 
+### TravisCI Build status:
+![image](https://travis-ci.org/ndlib/repopurl/settings?branch=master)
+
 ## TODO
 - [x] Get a "hello world" HTTP server running.
 - [x] Add in the read-only routes from the repopurl spec, and get it mostly working using hard-coded data. We can use either the Gorilla Mux library or the httprouter library, like ndlib/bendo uses.
