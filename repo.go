@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -15,21 +14,6 @@ import (
 // store pointer to sql database
 type purldb struct {
 	db *sql.DB
-}
-
-// A MemoryRepo is a Repository that keeps everything in memory.
-// It is mostly useful for testing.
-type memoryRepo struct {
-	m sync.RWMutex // protects everything below
-
-	// last ID minted
-	currentID int
-
-	// list of Purl objects
-	purls Purls
-
-	// list of repository resources
-	repos Repos
 }
 
 // A Repository stores the purls we know about.

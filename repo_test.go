@@ -14,6 +14,38 @@ var (
 	source *purldb
 )
 
+// UNAPPROVED: commands to test the sql
+// without needing to run a backend 
+// database. Implemented but not used
+// func TestcreatePurlDB(t *testing.T) {
+// 	db, mock, err := sqlmock.New()
+// 	if err != nil {
+// 		t.Fatalf("an error '%s' opening db", err)
+// 	}
+// 	defer db.Close()
+// 	source = &purldb{db: db}
+// 	purl_test := Purl{
+// 		Repo_obj_id:1, 
+// 		Access_count:723, 
+// 		Last_accessed:"2016-11-16 03:27:15", 
+// 		Date_created: "2011-09-14 13:56:38",
+// 	}
+
+// 	mock.ExpectBegin()
+// 	mock.ExpectExec("INSERT INTO purl (purl_id, repo_object_id, last_accessed, source_app, date_created)").
+// 		WithArgs(purl_test).
+// 		WillReturnResult(sqlmock.NewResult(1,1))
+// 	mock.ExpectCommit()
+
+// 	if err := source.createPurlDB(purl_test); err != nil {
+// 		t.Errorf("error there was an unpected failure when testing insert: %s", err)
+// 	}
+
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectation: %s", err)
+// 	}
+// }
+
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 

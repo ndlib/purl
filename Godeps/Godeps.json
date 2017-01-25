@@ -1,8 +1,13 @@
 {
 	"ImportPath": "repopurl",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v76",
+	"GodepVersion": "v77",
 	"Deps": [
+		{
+			"ImportPath": "github.com/DATA-DOG/go-sqlmock",
+			"Comment": "v1.1.4-16-gd24b409",
+			"Rev": "d24b4098664ed890b984620806ad50da6bced383"
+		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Comment": "v1.1.0",

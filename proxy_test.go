@@ -15,7 +15,9 @@ var (
 	source *purldb
 )
 
-func TestAllPurls(t *testing.T) {
+func TestPurlShowFile(t *testing.T) {
+	source.db.ExpectBegin()
+	source.db.ExpectExec
 }
 
 func TestFindPurl(t *testing.T) {
@@ -25,9 +27,10 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	mysqlconn := os.Getenv("MYSQL_CONNECTION")
-	if mysqlconn == "" {
-		panic("MYSQL_CONNECTION not set")
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening stud db", err)
 	}
-	source = NewDBSource(mysqlconn)
+
+	source = &purldb{db: mock}
 }
