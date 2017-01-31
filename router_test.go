@@ -3,122 +3,56 @@
 package main
 
 import (
+	"io/ioutil"
+	"net/http/httptest"
 	"testing"
-	"sync"
-	"httptest"
-
+	"time"
 )
 
 var (
-	source *purldb
+	source memoryRepo
 )
 
-// A MemoryRepo is a Repository that keeps everything in memory.
-// It is mostly useful for testing.
-type memoryRepo struct {
-	m sync.RWMutex // protects everything below
-
-	// last ID minted
-	currentID int
-
-	// list of Purl objects
-	purls []Purl
-
-	// list of repository resources
-	repos []Repo
-}
-
-
-func (mr *memoryRepo) AllPurls() []Purl {
-	mr.m.RLock()
-	defer mr.m.RUnlock()
-	return mr.purls[:]
-}
-
-func (mr *memoryRepo) FindPurl(id int) Purl {
-	mr.m.RLock()
-	defer mr.m.RUnlock()
-	for _, t := range mr.purls {
-		if t.Id == id {
-			return t
-		}
-	}
-	// return empty if not found
-	return Purl{}
-}
-
-func (mr *memoryRepo) FindQuery(query string) []RepoObj {
-	mr.m.RLock()
-	defer mr.m.RUnlock()
-	var ret []RepoObj
-	for _, q := range mr.repos {
-		if strings.Contains(q.Information, query) {
-			ret = append(ret, q)
-		}
-	}
-	return ret
-}
-
-func (mr *memoryRepo) FindRepos(id int) RepoObj {
-	mr.m.RLock()
-	defer mr.m.RUnlock()
-	var ret RepoObj
-	for _, r := range mr.repos {
-		if r.Id = id {
-			return r
-		}
-	}
-	return RepoObj{}
-}
-
-func (mr *memoryRepo) CreatePurl(t Purl) {
-	mr.m.Lock()
-	defer mr.m.Unlock()
-	mr.currentID += 1
-	t.Id = mr.currentID
-	mr.purls = append(mr.purls, t)
-}
-
-func (mr *memoryRepo) DestroyPurl(id int) error {
-	mr.m.Lock()
-	defer mr.m.Unlock()
-	for i, t := range mr.purls {
-		if t.Id == id {
-			mr.purls = append(mr.purls[:i], mr.purls[i+1:]...)
-			return nil
-		}
-	}
-	return fmt.Errorf("Could not find Purl with id of %d to delete", id)
-}
-
-func TestRouterProxy(t *testing.T){
-	handler := &PurlShowFile{}
-	server := httptest.NewServer(handler)
+func TestRouterProxy(t *testing.T) {
+	server := httptest.NewServer(NewRouter())
 	defer server.Close()
 
-	resp, err := http.Get(server.Url)
+	var newpurl Purl
+	var err error
+	newpurl.Id = 11
+	newpurl.Repo_obj_id = "110"
+	newpurl.Last_accessed, err = time.Parse(time.RFC3339, "2016-11-16T03:33:33Z")
+	if err != nil {
+		t.Error(err.Error())
+	}
+	newpurl.Date_created, err = time.Parse(time.RFC3339, "2011-09-14T13:55:55Z")
+	if err != nil {
+		panic(err)
+	}
+
+	var newrepo RepoObj
+	newrepo.Id = 110
+	newrepo.Information = `^(CurateND - |Reformatting Unit:)`
+	newrepo.Url = `www.example.com`
+
+	source.CreatePurl(newpurl)
+	source.CreateRepo(newrepo)
+
+	res, err := httptest.Get(server.URL + `/view/11/any.pdf`)
+	if err != nil {
+		t.Error(err)
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	if res.StatusCode != 302 {
+		t.Error("invalid status code")
+	}
 }
 
 func init() {
-
+	repo := &memoryRepo{}
+	source = repo
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

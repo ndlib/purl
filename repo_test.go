@@ -15,7 +15,7 @@ var (
 )
 
 // UNAPPROVED: commands to test the sql
-// without needing to run a backend 
+// without needing to run a backend
 // database. Implemented but not used
 // func TestcreatePurlDB(t *testing.T) {
 // 	db, mock, err := sqlmock.New()
@@ -25,9 +25,9 @@ var (
 // 	defer db.Close()
 // 	source = &purldb{db: db}
 // 	purl_test := Purl{
-// 		Repo_obj_id:1, 
-// 		Access_count:723, 
-// 		Last_accessed:"2016-11-16 03:27:15", 
+// 		Repo_obj_id:1,
+// 		Access_count:723,
+// 		Last_accessed:"2016-11-16 03:27:15",
 // 		Date_created: "2011-09-14 13:56:38",
 // 	}
 

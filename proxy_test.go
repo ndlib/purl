@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	_  "github.com/DATA-DOG/go-sqlmock"
 )
 
 var (
