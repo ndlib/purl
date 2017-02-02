@@ -1,11 +1,9 @@
-
-repopurl
-
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
 *.so
 *.swp
+repopurl
 
 # Folders
 _obj
@@ -23,8 +21,15 @@ _cgo_gotypes.go
 _cgo_export.*
 *.gcfg
 
+# Test binary, build with `go test -c`
+*.test
 _testmain.go
 
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out 
+
+# Binaries for programs and plugins
 *.exe
-*.test
+*.dll
+*.dylib
 *.prof

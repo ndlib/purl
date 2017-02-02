@@ -3,56 +3,49 @@
 package main
 
 import (
-	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
+
+	"github.com/gorilla/mux"
 )
 
 var (
-	source memoryRepo
+	source *memoryRepo
 )
 
 func TestRouterProxy(t *testing.T) {
-	server := httptest.NewServer(NewRouter())
+	router := mux.NewRouter().StrictSlash(true)
+	server := httptest.NewServer(router)
 	defer server.Close()
 
-	var newpurl Purl
-	var err error
-	newpurl.Id = 11
-	newpurl.Repo_obj_id = "110"
-	newpurl.Last_accessed, err = time.Parse(time.RFC3339, "2016-11-16T03:33:33Z")
-	if err != nil {
-		t.Error(err.Error())
-	}
-	newpurl.Date_created, err = time.Parse(time.RFC3339, "2011-09-14T13:55:55Z")
-	if err != nil {
-		panic(err)
+	newpurl := Purl{
+		Id:          11,
+		Repo_obj_id: "110",
 	}
 
-	var newrepo RepoObj
-	newrepo.Id = 110
-	newrepo.Information = `^(CurateND - |Reformatting Unit:)`
-	newrepo.Url = `www.example.com`
-
-	source.CreatePurl(newpurl)
-	source.CreateRepo(newrepo)
-
-	res, err := httptest.Get(server.URL + `/view/11/any.pdf`)
-	if err != nil {
-		t.Error(err)
+	newrepo := RepoObj{
+		Id:          110,
+		Information: `CurateND - |Reformatting Unit:`,
+		Url:         `http://catalog.hathitrust.org/Record/009783954`,
 	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+
+	datasource.CreatePurl(newpurl)
+	datasource.CreateRepo(newrepo)
+
+	req, err := http.NewRequest("GET", `/view/11/any.pdf`, nil)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	if res.StatusCode != 302 {
-		t.Error("invalid status code")
+	rr := httptest.NewRecorder()
+
+	NewRouter().ServeHTTP(rr, req)
+	if rr.Code != 302 {
+		t.Errorf("invalid status code", rr.Code)
 	}
 }
 
 func init() {
 	repo := &memoryRepo{}
-	source = repo
+	datasource = repo
 }

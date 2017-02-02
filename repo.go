@@ -18,15 +18,20 @@ type purldb struct {
 type Repository interface {
 	// FindPurl returns information about the given purl identifier.
 	// It returns the zero Purl if there is no purl with that id.
-	FindPurl(id int) Purl
-
-	FindQuery(query string) []RepoObj
 
 	AllPurls() []Purl
 
-	CreatePurl(t Purl)
+	AllRepos() []RepoObj
+
+	FindPurl(id int) Purl
 
 	FindRepoObj(id int) RepoObj
+
+	FindQuery(query string) []RepoObj
+
+	CreatePurl(t Purl)
+
+	CreateRepo(t RepoObj)
 
 	LogRecordAccess(vars *http.Request, repo_id int, p_id int)
 }
@@ -148,6 +153,24 @@ func (sq *purldb) AllPurls() []Purl {
 	return result
 }
 
+func (sq *purldb) AllRepos() []RepoObj {
+	var result []RepoObj
+	rows, err := sq.queryRepoDB(-1)
+	if err != nil {
+		log.Printf("Error getting all repos: %s", err.Error())
+		return result
+	}
+	defer rows.Close()
+	for rows.Next() {
+		result = append(result, ScanRepoDB(rows))
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Error on rows scan: %s", err)
+		return result
+	}
+	return result
+}
+
 func ScanPurlDB(rows *sql.Rows) Purl {
 	var temp_purl Purl
 	var last_accessed mysql.NullTime
@@ -239,6 +262,11 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 
 func (sq *purldb) CreatePurl(t Purl) {
 	sq.createPurlDB(t)
+	return
+}
+
+func (sq *purldb) CreateRepo(t RepoObj) {
+	sq.createRepoDB(t)
 	return
 }
 

@@ -14,6 +14,55 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// HELPERS FOR THE HANDLERSX
+func Query(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var query string
+	query = vars["query"]
+	query_body := datasource.FindQuery(query)
+	if query_body != nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(query_body); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	// If we didn't find it, 404
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+		panic(err)
+	}
+}
+
+// Helper to set http.ResponseWriter
+func setResponseContent(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+	vars := mux.Vars(r)
+
+	if r.ContentLength > 1 {
+		w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
+	} else if r.ContentLength < 0 {
+		con_length := int64(math.Pow(float64(2), float64(32))) + r.ContentLength
+		w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
+	}
+
+	filename := vars["filename"]
+	re := regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+	if re.MatchString(filename) {
+		file_value := "attachment; filename=$" + filename
+		w.Header().Set("Content-Disposition", file_value)
+	} else {
+		file_value := "inline; filename=$" + filename
+		w.Header().Set("Content-Disposition", file_value)
+	}
+	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	w.WriteHeader(http.StatusOK)
+	return w
+}
+
+// HANDLERS TO TAKE CARE OF THE WEBPAGES
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Cat Game.\n")
 }
@@ -60,52 +109,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Query(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	var query string
-	query = vars["query"]
-	query_body := datasource.FindQuery(query)
-	if query_body != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(query_body); err != nil {
-			panic(err)
-		}
-		return
-	}
-
-	// If we didn't find it, 404
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusNotFound)
-	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-		panic(err)
-	}
-}
-
-func setResponseContent(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-	vars := mux.Vars(r)
-
-	if r.ContentLength > 1 {
-		w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
-	} else if r.ContentLength < 0 {
-		con_length := int64(math.Pow(float64(2), float64(32))) + r.ContentLength
-		w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
-	}
-
-	filename := vars["filename"]
-	re := regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
-	if re.MatchString(filename) {
-		file_value := "attachment; filename=$" + filename
-		w.Header().Set("Content-Disposition", file_value)
-	} else {
-		file_value := "inline; filename=$" + filename
-		w.Header().Set("Content-Disposition", file_value)
-	}
-	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-	w.WriteHeader(http.StatusOK)
-	return w
-}
-
+// Either copies over or redirects a file from a remote source
 func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var (
@@ -114,7 +118,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
-		log.Println(err)
+		log.Println("purlID err:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -137,7 +142,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Add permissions to our url request
+		// TODO: Add permissions to our url request
 		re := regexp.MustCompile(`http(s):\/\/(.+)`)
 		// fedorausername := "user"
 		// fedorapassword := "pass"
@@ -174,9 +179,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 
 /*
 Test with this curl command:
-
 curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/purl/create
-
 */
 func PurlCreate(w http.ResponseWriter, r *http.Request) {
 	var purl Purl

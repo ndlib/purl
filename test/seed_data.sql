@@ -1,3 +1,7 @@
+CREATE DATABASE IF NOT EXISTS test;
+
+USE test;
+
 CREATE TABLE `object_access` (
   `access_id` int(11) NOT NULL AUTO_INCREMENT,
   `date_accessed` datetime NOT NULL,

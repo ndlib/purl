@@ -4,11 +4,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 )
 
-// A MemoryRepo is a Repository that keeps everything in memory.
+// An standin for the Repository class used in other functions
+// This struct is mostly used so that we can test our handlers
+// and other func without having to run our database.
 // It is mostly useful for testing.
 type memoryRepo struct {
 	m sync.RWMutex // protects everything below
@@ -29,6 +32,12 @@ func (mr *memoryRepo) AllPurls() []Purl {
 	return mr.purls[:]
 }
 
+func (mr *memoryRepo) AllRepos() []RepoObj {
+	mr.m.RLock()
+	defer mr.m.RUnlock()
+	return mr.repos[:]
+}
+
 func (mr *memoryRepo) FindPurl(id int) Purl {
 	mr.m.RLock()
 	defer mr.m.RUnlock()
@@ -39,6 +48,17 @@ func (mr *memoryRepo) FindPurl(id int) Purl {
 	}
 	// return empty if not found
 	return Purl{}
+}
+
+func (mr *memoryRepo) FindRepoObj(id int) RepoObj {
+	mr.m.RLock()
+	defer mr.m.RUnlock()
+	for _, r := range mr.repos {
+		if r.Id == id {
+			return r
+		}
+	}
+	return RepoObj{}
 }
 
 func (mr *memoryRepo) FindQuery(query string) []RepoObj {
@@ -53,23 +73,13 @@ func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 	return ret
 }
 
-func (mr *memoryRepo) FindRepos(id int) RepoObj {
-	mr.m.RLock()
-	defer mr.m.RUnlock()
-	var ret RepoObj
-	for _, r := range mr.repos {
-		if r.Id != id {
-			return r
-		}
-	}
-	return RepoObj{}
-}
-
 func (mr *memoryRepo) CreatePurl(t Purl) {
 	mr.m.Lock()
 	defer mr.m.Unlock()
-	mr.currentID += 1
-	t.Id = mr.currentID
+	if t.Id == 0 {
+		mr.currentID += 1
+		t.Id = mr.currentID
+	}
 	mr.purls = append(mr.purls, t)
 }
 
@@ -77,6 +87,10 @@ func (mr *memoryRepo) CreateRepo(t RepoObj) {
 	mr.m.Lock()
 	defer mr.m.Unlock()
 	mr.repos = append(mr.repos, t)
+}
+
+func (mr *memoryRepo) LogRecordAccess(vars *http.Request, repo_id int, p_id int) {
+	return
 }
 
 func (mr *memoryRepo) DestroyPurl(id int) error {
@@ -90,4 +104,3 @@ func (mr *memoryRepo) DestroyPurl(id int) error {
 	}
 	return fmt.Errorf("Could not find Purl with id of %d to delete", id)
 }
-
