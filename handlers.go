@@ -126,9 +126,11 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
-		log.Println("purlID err:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
+			log.Printf(err.Error())
+		}
 	}
 
 	purl := datasource.FindPurl(purlId)
