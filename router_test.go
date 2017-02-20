@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	source *memoryRepo
+	datasource *memoryRepo
 )
 
 func TestRouterProxy(t *testing.T) {

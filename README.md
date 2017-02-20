@@ -8,9 +8,12 @@ statically to an admin with
 access to the application
 
 ## Testing
-To run test that need the database to be running execute the
-sql file in the test directory. Test need to refer to a
-database called test in order to run.
+To run test that need the database execute the sql file in
+the test directory. In order to setup the connection to any database
+set the environment variables "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_HOST",
+"MYSQL_PORT" and "MYSQL_DB" to the correct values. Execute the file in test to
+initialize the seed data with the correct values and the test database. Command
+shown below:
 
 `mysql --user=(someuser) --password=(somepassword) < ./test/seed_data.sql `
 

@@ -276,17 +276,9 @@ func (sq *purldb) LogRecordAccess(r *http.Request, repo_id int, p_id int) {
 	(date_accessed, ip_address, host_name, referer, user_agent, request_method, path_info, repo_object_id, purl_id)
 	VALUES
 	(now(),?,?,?,?,?,?,?,?)`
-	ip_address := r.RemoteAddr
-	host_name := r.Host
-	referer := r.Referer()
-	user_agent := r.UserAgent()
-	request_method := r.Method
-	path_info := r.URL.Path
-	repo_object_id := repo_id
-	purl_id := p_id
 	_, err := sq.db.Exec(
-		upstring, ip_address, host_name, referer, user_agent,
-		request_method, path_info, repo_object_id, purl_id,
+		upstring, r.RemoteAddr, r.Host, r.Referer(), r.UserAgent(),
+		r.Method, r.URL.Path, repo_id, p_id,
 	)
 	if err != nil {
 		log.Printf("Problem updating access to database: %s", err.Error())

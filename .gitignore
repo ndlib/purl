@@ -26,10 +26,13 @@ _cgo_export.*
 _testmain.go
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out 
+*.out
 
 # Binaries for programs and plugins
 *.exe
 *.dll
 *.dylib
 *.prof
+
+# Mac file system
+.DS_Store
