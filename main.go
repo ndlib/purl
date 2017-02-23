@@ -32,10 +32,11 @@ func main() {
 	port := os.Getenv("MYSQL_PORT")
 	var mysqlLocation string
 	if(port == "") {
-		mysqlLocation = fmt.Sprintf("%s:%s@%s/%s",
+		mysqlLocation = fmt.Sprintf("%s:%s@%s:%s/%s",
 			os.Getenv("MYSQL_USER"),
 			os.Getenv("MYSQL_PASSWORD"),
 			os.Getenv("MYSQL_HOST"),
+			"3306",
 			os.Getenv("MYSQL_DB"),
 		)
 	} else {
