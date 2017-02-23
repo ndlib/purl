@@ -30,15 +30,16 @@ type Config struct {
 func main() {
 	// mySql information for login
 	port := os.Getenv("MYSQL_PORT")
+	var mysqlLocation string
 	if(port == "") {
-		mysqlLocation := fmt.Sprintf("%s:%s@%s/%s",
+		mysqlLocation = fmt.Sprintf("%s:%s@%s/%s",
 			os.Getenv("MYSQL_USER"),
 			os.Getenv("MYSQL_PASSWORD"),
 			os.Getenv("MYSQL_HOST"),
 			os.Getenv("MYSQL_DB"),
 		)
 	} else {
-		mysqlLocation := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 			os.Getenv("MYSQL_USER"),
 			os.Getenv("MYSQL_PASSWORD"),
 			os.Getenv("MYSQL_HOST"),
