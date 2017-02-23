@@ -29,17 +29,27 @@ type Config struct {
 
 func main() {
 	// mySql information for login
-	mysqlLocation := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		os.Getenv("MYSQL_USER"),
-		os.Getenv("MYSQL_PASSWORD"),
-		os.Getenv("MYSQL_HOST"),
-		os.Getenv("MYSQL_PORT"),
-		os.Getenv("MYSQL_DB"),
-	)
-
+	port := os.Getenv("MYSQL_PORT")
+	if(port == "") {
+		mysqlLocation := fmt.Sprintf("%s:%s@%s/%s",
+			os.Getenv("MYSQL_USER"),
+			os.Getenv("MYSQL_PASSWORD"),
+			os.Getenv("MYSQL_HOST"),
+			os.Getenv("MYSQL_DB"),
+		)
+	} else {
+		mysqlLocation := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+			os.Getenv("MYSQL_USER"),
+			os.Getenv("MYSQL_PASSWORD"),
+			os.Getenv("MYSQL_HOST"),
+			os.Getenv("MYSQL_PORT"),
+			os.Getenv("MYSQL_DB"),
+		)
+	}
 	datasource = NewDBSource(mysqlLocation)
 
 	router := NewRouter()
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
+
