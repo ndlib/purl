@@ -27,7 +27,8 @@ func Query(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(query_body); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 		return
 	}
@@ -36,7 +37,8 @@ func Query(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)
 	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 }
 
@@ -75,7 +77,8 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	ps := datasource.AllPurls()
 	if err := json.NewEncoder(w).Encode(ps); err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 }
 
@@ -84,7 +87,8 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	ps := datasource.AllPurls()
 	if err := json.NewEncoder(w).Encode(len(ps)); err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 }
 
@@ -96,7 +100,8 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 	}
 	purl := datasource.FindPurl(purlId)
@@ -105,14 +110,16 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(purl); err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 	return
 }
@@ -129,7 +136,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 	}
 
@@ -140,7 +148,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 	}
 
@@ -148,7 +157,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	repo := datasource.FindRepoObj(repo_id)
 
 	if repo.Id != repo_id {
-		log.Printf("Could not return correct repo object")
+		log.Println("Could not return correct repo object")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -173,7 +182,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := http.Get(back_end_new)
 	if err != nil {
-		log.Printf("Unable to grab file: %s", err.Error())
+		log.Println("Unable to grab file: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -186,6 +195,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	return
 }
@@ -198,16 +208,19 @@ func PurlCreate(w http.ResponseWriter, r *http.Request) {
 	var purl Purl
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 	if err := r.Body.Close(); err != nil {
-		log.Printf(err.Error())
+		log.Println(err.Error())
+		return
 	}
 	if err := json.Unmarshal(body, &purl); err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(422) // unprocessable entity
 		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Printf(err.Error())
+			log.Println(err.Error())
+			return
 		}
 	}
 
