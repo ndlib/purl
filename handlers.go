@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"html/template"
 	"os"
 	"regexp"
 	"strconv"
@@ -115,9 +116,17 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(purl); err != nil {
+	t, err := template.ParseFiles("data/view.html")
+	if err != nil {
+		// asset not found, back up plan
+		if err := json.NewEncoder(w).Encode(purl); err != nil {
+			log.Println(err.Error())
+			return
+		}
+	}
+	if err := t.Execute(w, purl); err != nil {
 		log.Println(err.Error())
 		return
 	}
