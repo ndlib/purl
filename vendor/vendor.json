@@ -1,0 +1,55 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "appengine/cloudsql",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "hIlwIhIdLUhh9xEnQ1jtaeJlO5E=",
+			"path": "github.com/DATA-DOG/go-sqlmock",
+			"revision": "d24b4098664ed890b984620806ad50da6bced383",
+			"revisionTime": "2017-01-15T13:12:39Z"
+		},
+		{
+			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
+			"revisionTime": "2016-12-17T20:04:45Z"
+		},
+		{
+			"checksumSHA1": "QD6LqgLz2JMxXqns8TaxtK9AuHs=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "2e00b5cd70399450106cec6431c2e2ce3cae5034",
+			"revisionTime": "2016-12-24T12:10:19Z"
+		},
+		{
+			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
+			"path": "github.com/gorilla/context",
+			"revision": "1c83b3eabd45b6d76072b66b746c20815fb2872d",
+			"revisionTime": "2015-08-20T05:12:45Z"
+		},
+		{
+			"checksumSHA1": "DOGELl/eJ66TomAnkQqKminijQU=",
+			"path": "github.com/gorilla/mux",
+			"revision": "26a6070f849969ba72b72256e9f14cf519751690",
+			"revisionTime": "2015-12-31T16:19:08Z"
+		},
+		{
+			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
+			"revisionTime": "2016-12-17T20:04:45Z"
+		},
+		{
+			"checksumSHA1": "JXUVA1jky8ZX8w09p2t5KLs97Nc=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
+			"revisionTime": "2016-12-17T20:04:45Z"
+		}
+	],
+	"rootPath": "repopurl"
+}

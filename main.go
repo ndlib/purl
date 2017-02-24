@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"gopkg.in/gcfg.v1"
 )
 
 var (
@@ -28,30 +28,23 @@ type Config struct {
 }
 
 func main() {
-
-	// config
-	var (
-		mysqlLocation string
-		config        Config
-	)
-	err := gcfg.ReadFileInto(&config, "config.gcfg")
-	if err != nil {
-		log.Printf("Error getting config information: %s", err.Error())
-		panic(err)
-	}
-
 	// mySql information for login
+	var mysqlLocation string
 	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		config.Mysql.User,
-		config.Mysql.Password,
-		config.Mysql.Host,
-		config.Mysql.Port,
-		config.Mysql.Database,
-	) // "root@tcp(127.0.0.1:3306)/test"
-
+		os.Getenv("MYSQL_USER"),
+		os.Getenv("MYSQL_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
+		os.Getenv("MYSQL_PORT"),
+		os.Getenv("MYSQL_DB"),
+	)
 	datasource = NewDBSource(mysqlLocation)
 
 	router := NewRouter()
+	var port string
+	port = os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

@@ -1,7 +1,7 @@
 {
 	"ImportPath": "repopurl",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v76",
+	"GodepVersion": "v77",
 	"Deps": [
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -30,31 +30,6 @@
 			"ImportPath": "github.com/stretchr/testify/assert",
 			"Comment": "v1.1.4-25-g2402e8e",
 			"Rev": "2402e8e7a02fc811447d11f881aa9746cdc57983"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1",
-			"Comment": "v1.2.0",
-			"Rev": "27e4946190b4a327b539185f2b5b1f7c84730728"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/scanner",
-			"Comment": "v1.2.0",
-			"Rev": "27e4946190b4a327b539185f2b5b1f7c84730728"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/token",
-			"Comment": "v1.2.0",
-			"Rev": "27e4946190b4a327b539185f2b5b1f7c84730728"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/types",
-			"Comment": "v1.2.0",
-			"Rev": "27e4946190b4a327b539185f2b5b1f7c84730728"
-		},
-		{
-			"ImportPath": "gopkg.in/warnings.v0",
-			"Comment": "v0.1.1",
-			"Rev": "8a331561fe74dadba6edfc59f3be66c22c3b065d"
 		}
 	]
 }

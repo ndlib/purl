@@ -1,6 +1,9 @@
+// +build mysql
+
 package main
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -9,14 +12,14 @@ import (
 )
 
 var (
-	source  *purldb
+	datasource *purldb
 )
 
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
 	var purltestdb *purldb
-	purltestdb = source
+	purltestdb = datasource
 
 	result := purltestdb.AllPurls()
 
@@ -30,7 +33,7 @@ func TestFindPurl(t *testing.T) {
 	assert := assert.New(t)
 
 	var purltestdb *purldb
-	purltestdb = source
+	purltestdb = datasource
 	result := purltestdb.FindPurl(5)
 
 	assert.NotEqual(result.Date_created, time.Time{}, "Time incorrectly set on repo")
@@ -68,7 +71,7 @@ func TestCreatePurl(t *testing.T) {
 	}
 
 	var purltestdb *purldb
-	purltestdb = source
+	purltestdb = datasource
 	_ = purltestdb.createPurlDB(newpurl)
 
 	result := purltestdb.FindPurl(11)
@@ -82,9 +85,14 @@ func TestCreatePurl(t *testing.T) {
 }
 
 func init() {
-	mysqlconn := os.Getenv("MYSQL_CONNECTION")
-	if mysqlconn == "" {
-		panic("MYSQL_CONNECTION not set")
-	}
-	source = NewDBSource(mysqlconn)
+
+	mysqlLocation := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		os.Getenv("MYSQL_USER"),
+		os.Getenv("MYSQL_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
+		os.Getenv("MYSQL_PORT"),
+		os.Getenv("MYSQL_DB"),
+	)
+
+	datasource = NewDBSource(mysqlLocation)
 }
