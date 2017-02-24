@@ -8,7 +8,6 @@ repopurl
 # Folders
 _obj
 _test
-vendor
 node_modules
 
 # Architecture specific extensions/prefixes
