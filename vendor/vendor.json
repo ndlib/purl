@@ -3,6 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "appengine/cloudsql",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "hIlwIhIdLUhh9xEnQ1jtaeJlO5E=",
 			"path": "github.com/DATA-DOG/go-sqlmock",
 			"revision": "d24b4098664ed890b984620806ad50da6bced383",

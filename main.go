@@ -30,13 +30,13 @@ type Config struct {
 func main() {
 	// mySql information for login
 	var mysqlLocation string
-		mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-			os.Getenv("MYSQL_USER"),
-			os.Getenv("MYSQL_PASSWORD"),
-			os.Getenv("MYSQL_HOST"),
-			os.Getenv("MYSQL_PORT"),
-			os.Getenv("MYSQL_DB"),
-		)
+	mysqlLocation = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		os.Getenv("MYSQL_USER"),
+		os.Getenv("MYSQL_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
+		os.Getenv("MYSQL_PORT"),
+		os.Getenv("MYSQL_DB"),
+	)
 	datasource = NewDBSource(mysqlLocation)
 
 	router := NewRouter()
@@ -48,4 +48,3 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
-
