@@ -181,9 +181,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		back_end_new = re_http.ReplaceAllString(repo.Url, repl)
 	}
 	resp, err := http.Get(back_end_new)
-	log.Println(resp)
 	if err != nil {
-		log.Println("Unable to grab file:", err.Error())
+		log.Println("Unable to grab url:", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
