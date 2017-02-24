@@ -18,6 +18,9 @@ shown below:
 `mysql --user=(someuser) --password=(somepassword) < ./test/seed_data.sql `
 
 
+## Demo
+currently live at https://repopurl.herokuapp.com
+
 ### TravisCI Build status:
 ![image](https://travis-ci.org/ndlib/repopurl.svg?branch=master)
 
