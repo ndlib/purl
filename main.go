@@ -40,7 +40,12 @@ func main() {
 	datasource = NewDBSource(mysqlLocation)
 
 	router := NewRouter()
+	var port string
+	port = os.Getenv("PORT")
+	if port == "" {
+		port = ":8080"
+	}
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(port, router))
 }
 
