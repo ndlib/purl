@@ -682,10 +682,18 @@
 			</tr>
 			<tr>
 				<td>
+					Note
+				</td>
+				<td>
+					{{.Information}}
+				</td>
+			</tr>
+			<tr>
+				<td>
 					File Name
 				</td>
 				<td>
-					{{.Repo_obj_id}}
+					{{.File_name}}
 				</td>
 			</tr>
 			<tr>
@@ -694,6 +702,14 @@
 				</td>
 				<td>
 					{{.Last_accessed}}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Repository URL
+				</td>
+				<td>
+					<a href="{{.Repo_url}}">{{.Repo_url}} </a>
 				</td>
 			</tr>
 			<tr>

@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -106,7 +107,9 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	purl := datasource.FindPurl(purlId)
-	if purl.Id == 0 {
+	repoId, _ := strconv.Atoi(purl.Repo_obj_id)
+	repo := datasource.FindRepoObj(repoId)
+	if purl.Id == 0 || repo.Id == 0 {
 		// If we didn't find it, 404
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
@@ -126,7 +129,25 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := t.Execute(w, purl); err != nil {
+
+	M := struct {
+		Id int 
+		Information string 
+		File_name string 
+		Repo_url string 
+		Repo_obj_id string 
+		Last_accessed time.Time 
+		Access_count int 
+	}{
+		purl.Id,
+		repo.Information,
+		repo.Filename,
+		repo.Url,
+		purl.Repo_obj_id,
+		purl.Last_accessed,
+		purl.Access_count,
+	}
+	if err := t.Execute(w, M); err != nil {
 		log.Println(err.Error())
 		return
 	}
