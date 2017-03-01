@@ -196,7 +196,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if we cannot proxy the file redirect to it
-	if regexp_curate.MatchString(repo.Information) {
+	if regexpCurate.MatchString(repo.Information) {
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 		http.Redirect(w, r, repo.Url, 302)
 		return
