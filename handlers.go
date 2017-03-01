@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"html/template"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/arschles/go-bindata-html-template"
 	"github.com/gorilla/mux"
 )
 
@@ -121,7 +121,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	t, err := template.ParseFiles("data/view.html")
+	t, err := template.New("mytmpl", Asset).Parse("data/view.html")
 	if err != nil {
 		// asset not found, back up plan
 		if err := json.NewEncoder(w).Encode(purl); err != nil {
@@ -131,13 +131,13 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	M := struct {
-		Id int 
-		Information string 
-		File_name string 
-		Repo_url string 
-		Repo_obj_id string 
-		Last_accessed time.Time 
-		Access_count int 
+		Id            int
+		Information   string
+		File_name     string
+		Repo_url      string
+		Repo_obj_id   string
+		Last_accessed time.Time
+		Access_count  int
 	}{
 		purl.Id,
 		repo.Information,
