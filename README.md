@@ -1,6 +1,9 @@
 # Purl
 Permanent Url Resource Locator
 
+[![Go Report
+Card](https://goreportcard.com/badge/github.com/ndlib/repopurl)](https://goreportcard.com/report/github.com/ndlib/repopurl)
+
 ## About
 A Go web application keeping
 all urls and serving them
