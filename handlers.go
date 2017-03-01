@@ -16,9 +16,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var regexp_curate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
-var re_http *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
-var re_zip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
+var reZip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
 
 // HELPERS FOR THE HANDLERS
 func Query(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func setResponseContent(w http.ResponseWriter, r *http.Response, file string) ht
 
 	filename := file
 
-	if re_zip.MatchString(filename) {
+	if reZip.MatchString(filename) {
 		file_value := "attachment; filename=" + filename
 		w.Header().Set("Content-Disposition", file_value)
 	} else {
@@ -74,6 +74,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Cat Game.\n")
 }
 
+// shows all purls
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -84,6 +85,7 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// admin interface
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -94,6 +96,7 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// gives back specific purl
 func PurlShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var purlId int
@@ -205,10 +208,10 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	var back_end_new string
 	if fedorausername != "" && fedorapassword != "" {
 		repl := `http$1://` + fedorausername + `:` + fedorapassword + `$2`
-		back_end_new = re_http.ReplaceAllString(repo.Url, repl)
+		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
 	} else {
 		repl := `http$1://$2`
-		back_end_new = re_http.ReplaceAllString(repo.Url, repl)
+		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
 	}
 	resp, err := http.Get(back_end_new)
 	if err != nil {

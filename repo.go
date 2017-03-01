@@ -44,6 +44,7 @@ func updateWait(wait int) int {
 	return wait
 }
 
+// Allows for the new database connection to be created
 func NewDBSource(mysqlconn string) *purldb {
 	mysqlconn = mysqlconn + "?parseTime=true"
 	db, err := sql.Open("mysql", mysqlconn)
@@ -135,6 +136,7 @@ func (sq *purldb) queryRepoDB(id int) (*sql.Rows, error) {
 	return sq.queryDB(id, "repo_object", "repo_object_id")
 }
 
+// FULL PURL LISTING RETRIEVAL
 func (sq *purldb) AllPurls() []Purl {
 	var result []Purl
 	rows, err := sq.queryPurlDB(-1)
@@ -153,6 +155,7 @@ func (sq *purldb) AllPurls() []Purl {
 	return result
 }
 
+// FULL REPO RESOURCE RETRIEVAL
 func (sq *purldb) AllRepos() []RepoObj {
 	var result []RepoObj
 	rows, err := sq.queryRepoDB(-1)
@@ -171,6 +174,7 @@ func (sq *purldb) AllRepos() []RepoObj {
 	return result
 }
 
+// HELPER TO GRAB PURL FILES
 func ScanPurlDB(rows *sql.Rows) Purl {
 	var temp_purl Purl
 	var last_accessed mysql.NullTime
@@ -180,7 +184,7 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 		&last_accessed, &source_app, &temp_purl.Date_created,
 	)
 	if err != nil {
-		log.Printf("Scan not succeded: %s", err)
+		log.Printf("Scan not succeeded: %s", err)
 		return temp_purl
 	}
 	if last_accessed.Valid {
@@ -192,6 +196,7 @@ func ScanPurlDB(rows *sql.Rows) Purl {
 	return temp_purl
 }
 
+// PURL OBJECT SEARCH AND RETRIEVAL
 func (sq *purldb) FindPurl(id int) Purl {
 	result := Purl{}
 	row, err := sq.queryPurlDB(id)
@@ -206,6 +211,7 @@ func (sq *purldb) FindPurl(id int) Purl {
 	return result
 }
 
+// HELPER TO GRAB REPO FILES
 func ScanRepoDB(rows *sql.Rows) RepoObj {
 	var temp_repo RepoObj
 	var date_modified mysql.NullTime
@@ -213,7 +219,7 @@ func ScanRepoDB(rows *sql.Rows) RepoObj {
 	err := rows.Scan(&temp_repo.Id, &temp_repo.Filename, &temp_repo.Url, &temp_repo.Date_added,
 		&temp_repo.Add_source_ip, &date_modified, &information)
 	if err != nil {
-		log.Printf("Scan not succeded: %s", err)
+		log.Printf("Scan not succeeded: %s", err)
 		return temp_repo
 	}
 	if date_modified.Valid {
@@ -225,6 +231,7 @@ func ScanRepoDB(rows *sql.Rows) RepoObj {
 	return temp_repo
 }
 
+// REPO OBJECT SEARCH AND RETRIEVAL
 func (sq *purldb) FindRepoObj(id int) RepoObj {
 	result := RepoObj{}
 	row, err := sq.queryRepoDB(id)
@@ -239,6 +246,7 @@ func (sq *purldb) FindRepoObj(id int) RepoObj {
 	return result
 }
 
+// FIND FOR REPO INFORMATION
 func (sq *purldb) FindQuery(query string) []RepoObj {
 	var result []RepoObj
 	qstring := `SELECT filename, url, date_added, add_source_ip, date_modified, information from repo_object
@@ -260,11 +268,13 @@ func (sq *purldb) FindQuery(query string) []RepoObj {
 	return result
 }
 
+// PURL TESTING AND CREATION
 func (sq *purldb) CreatePurl(t Purl) {
 	sq.createPurlDB(t)
 	return
 }
 
+// REPO TESTING AND CREATION
 func (sq *purldb) CreateRepo(t RepoObj) {
 	sq.createRepoDB(t)
 	return

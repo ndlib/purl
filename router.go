@@ -6,53 +6,53 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Route struct {
+type route struct {
 	Name        string
 	Method      string
 	Pattern     string
 	HandlerFunc http.HandlerFunc
 }
 
-type Routes []Route
+type routes []route
 
-var routes = Routes{
-	Route{
+var repoRoutes = routes{
+	route{
 		"Index",
 		"GET",
 		"/",
 		Index,
 	},
-	Route{
+	route{
 		"AdminIndex",
 		"GET",
 		"/admin",
 		AdminIndex,
 	},
-	Route{
+	route{
 		"PurlIndex",
 		"GET",
 		"/purls",
 		PurlIndex,
 	},
-	Route{
+	route{
 		"PurlCreate",
 		"POST",
 		"/purl/create",
 		PurlCreate,
 	},
-	Route{
+	route{
 		"PurlShow",
 		"GET",
 		"/view/{purlId}",
 		PurlShow,
 	},
-	Route{
+	route{
 		"PurlShowFile",
 		"GET",
 		"/view/{purlId}/{filename}",
 		PurlShowFile,
 	},
-	Route{
+	route{
 		"Query",
 		"GET",
 		"/query?={query}",
@@ -60,10 +60,11 @@ var routes = Routes{
 	},
 }
 
+// Our initial router
 func NewRouter() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
-	for _, route := range routes {
+	for _, route := range repoRoutes {
 		var handler http.Handler
 
 		handler = route.HandlerFunc
