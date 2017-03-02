@@ -17,12 +17,6 @@
 			"revisionTime": "2017-01-15T13:12:39Z"
 		},
 		{
-			"checksumSHA1": "iE6Dtu/bF8ImMlyM4F7fKU3ktts=",
-			"path": "github.com/arschles/go-bindata-html-template",
-			"revision": "839a6918b9ff535f95246ef0f43edfdb4ed186be",
-			"revisionTime": "2017-01-23T18:28:18Z"
-		},
-		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",

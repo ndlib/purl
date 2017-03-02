@@ -6,19 +6,63 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"html/template"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/arschles/go-bindata-html-template"
 	"github.com/gorilla/mux"
 )
 
 var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
 var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
 var reZip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+
+var (
+	txViewTemplate = template.Must(template.New("txinfo").Parse(`<html>
+	<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	    <title>Hesburgh Libraries Permanent URL System</title>
+	</head>
+
+	<body lang="en">
+
+	    <h1>View PURL</h1>
+
+	    <table>
+	        <tbody>
+	            <tr>
+	                <td>ID</td>
+	                <td>{{.Id}}</td>
+	            </tr>
+	            <tr>
+	                <td>Note</td>
+	                <td>{{.Information}}</td>
+	            </tr>
+	            <tr>
+	                <td>File Name</td>
+	                <td>{{.File_name}}</td>
+	            </tr>
+	            <tr>
+	                <td>Last Accessed</td>
+	                <td>{{.Last_accessed}}</td>
+	            </tr>
+	            <tr>
+	                <td>Repository URL</td>
+	                <td><a href="{{.Repo_url}}">{{.Repo_url}} </a></td>
+	            </tr>
+	            <tr>
+	                <td>Access Count</td>
+	                <td>{{.Access_count}}</td>
+	            </tr>
+	        </tbody>
+	    </table>
+
+	    <a title="University of Notre Dame" href="http://www.nd.edu/">University of Notre Dame</a>
+	</body></html>`))
+)
 
 // HELPERS FOR THE HANDLERS
 func Query(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +168,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	t, err := template.New("mytmpl", Asset).Parse("data/view.html")
+	// t, err := template.New("mytmpl", Asset).Parse("data/view.html")
 	if err != nil {
 		// asset not found, back up plan
 		if err := json.NewEncoder(w).Encode(purl); err != nil {
@@ -150,7 +194,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		purl.Last_accessed,
 		purl.Access_count,
 	}
-	if err := t.Execute(w, M); err != nil {
+	if err := txViewTemplate.Execute(w, M); err != nil {
 		log.Println(err.Error())
 		return
 	}
