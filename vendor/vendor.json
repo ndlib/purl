@@ -3,6 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "-v",
+			"revision": ""
+		},
+		{
 			"path": "appengine/cloudsql",
 			"revision": ""
 		},
@@ -49,6 +53,12 @@
 			"path": "github.com/stretchr/testify/assert",
 			"revision": "2402e8e7a02fc811447d11f881aa9746cdc57983",
 			"revisionTime": "2016-12-17T20:04:45Z"
+		},
+		{
+			"checksumSHA1": "2aC00xBViVf8RYhYLk24tOVDsmQ=",
+			"path": "repopurl",
+			"revision": "792d10b2f828438014dc28e74c42afcca38bbd29",
+			"revisionTime": "2017-02-28T21:38:13Z"
 		}
 	],
 	"rootPath": "repopurl"

@@ -6,17 +6,63 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"html/template"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
-var regexp_curate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
-var re_http *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
-var re_zip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
+var reZip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+
+var (
+	txViewTemplate = template.Must(template.New("txinfo").Parse(`<html>
+	<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	    <title>Hesburgh Libraries Permanent URL System</title>
+	</head>
+
+	<body lang="en">
+
+	    <h1>View PURL</h1>
+
+	    <table>
+	        <tbody>
+	            <tr>
+	                <td>ID</td>
+	                <td>{{.Id}}</td>
+	            </tr>
+	            <tr>
+	                <td>Note</td>
+	                <td>{{.Information}}</td>
+	            </tr>
+	            <tr>
+	                <td>File Name</td>
+	                <td>{{.File_name}}</td>
+	            </tr>
+	            <tr>
+	                <td>Last Accessed</td>
+	                <td>{{.Last_accessed}}</td>
+	            </tr>
+	            <tr>
+	                <td>Repository URL</td>
+	                <td><a href="{{.Repo_url}}">{{.Repo_url}} </a></td>
+	            </tr>
+	            <tr>
+	                <td>Access Count</td>
+	                <td>{{.Access_count}}</td>
+	            </tr>
+	        </tbody>
+	    </table>
+
+	    <a title="University of Notre Dame" href="http://www.nd.edu/">University of Notre Dame</a>
+	</body></html>`))
+)
 
 // HELPERS FOR THE HANDLERS
 func Query(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +101,7 @@ func setResponseContent(w http.ResponseWriter, r *http.Response, file string) ht
 
 	filename := file
 
-	if re_zip.MatchString(filename) {
+	if reZip.MatchString(filename) {
 		file_value := "attachment; filename=" + filename
 		w.Header().Set("Content-Disposition", file_value)
 	} else {
@@ -72,6 +118,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Cat Game.\n")
 }
 
+// shows all purls
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -82,6 +129,7 @@ func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// admin interface
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -92,6 +140,7 @@ func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// gives back specific purl
 func PurlShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var purlId int
@@ -105,7 +154,9 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	purl := datasource.FindPurl(purlId)
-	if purl.Id == 0 {
+	repoId, _ := strconv.Atoi(purl.Repo_obj_id)
+	repo := datasource.FindRepoObj(repoId)
+	if purl.Id == 0 || repo.Id == 0 {
 		// If we didn't find it, 404
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusNotFound)
@@ -115,9 +166,35 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(purl); err != nil {
+	// t, err := template.New("mytmpl", Asset).Parse("data/view.html")
+	if err != nil {
+		// asset not found, back up plan
+		if err := json.NewEncoder(w).Encode(purl); err != nil {
+			log.Println(err.Error())
+			return
+		}
+	}
+
+	M := struct {
+		Id            int
+		Information   string
+		File_name     string
+		Repo_url      string
+		Repo_obj_id   string
+		Last_accessed time.Time
+		Access_count  int
+	}{
+		purl.Id,
+		repo.Information,
+		repo.Filename,
+		repo.Url,
+		purl.Repo_obj_id,
+		purl.Last_accessed,
+		purl.Access_count,
+	}
+	if err := txViewTemplate.Execute(w, M); err != nil {
 		log.Println(err.Error())
 		return
 	}
@@ -163,7 +240,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if we cannot proxy the file redirect to it
-	if regexp_curate.MatchString(repo.Information) {
+	if regexpCurate.MatchString(repo.Information) {
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 		http.Redirect(w, r, repo.Url, 302)
 		return
@@ -175,10 +252,10 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	var back_end_new string
 	if fedorausername != "" && fedorapassword != "" {
 		repl := `http$1://` + fedorausername + `:` + fedorapassword + `$2`
-		back_end_new = re_http.ReplaceAllString(repo.Url, repl)
+		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
 	} else {
 		repl := `http$1://$2`
-		back_end_new = re_http.ReplaceAllString(repo.Url, repl)
+		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
 	}
 	resp, err := http.Get(back_end_new)
 	if err != nil {
