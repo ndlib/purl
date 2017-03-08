@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Purl struct {
 	Id            int       `json:"id"`
@@ -11,8 +13,6 @@ type Purl struct {
 	Date_created  time.Time `json:"date_created"`
 }
 
-type Purls []Purl
-
 type RepoObj struct {
 	Id            int       `json:"id"`
 	Filename      string    `json:"filename"`
@@ -22,5 +22,3 @@ type RepoObj struct {
 	Date_modified time.Time `json:"date_modified"`
 	Information   string    `json:"information"`
 }
-
-type Repos []RepoObj

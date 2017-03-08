@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
-	"html/template"
 	"net/http"
 	"os"
 	"regexp"
@@ -15,6 +15,11 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+type jsonErr struct {
+	Code int    `json:"code"`
+	Text string `json:"text"`
+}
 
 var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
 var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)

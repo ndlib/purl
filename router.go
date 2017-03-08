@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -13,9 +15,7 @@ type route struct {
 	HandlerFunc http.HandlerFunc
 }
 
-type routes []route
-
-var repoRoutes = routes{
+var repoRoutes = []route{
 	route{
 		"Index",
 		"GET",
@@ -62,7 +62,6 @@ var repoRoutes = routes{
 
 // Our initial router
 func NewRouter() *mux.Router {
-
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range repoRoutes {
 		var handler http.Handler
@@ -79,4 +78,21 @@ func NewRouter() *mux.Router {
 	}
 
 	return router
+}
+
+// Logger returns a Handler that wraps inner and logs the request path and duration at the end.
+func Logger(inner http.Handler, name string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		inner.ServeHTTP(w, r)
+
+		log.Printf(
+			"%s\t%s\t%s\t%s",
+			r.Method,
+			r.RequestURI,
+			name,
+			time.Since(start),
+		)
+	})
 }
