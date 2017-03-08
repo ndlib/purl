@@ -167,8 +167,8 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 			log.Println(err.Error())
-			return
 		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
@@ -219,8 +219,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 			log.Println(err.Error())
-			return
 		}
+		return
 	}
 
 	purl := datasource.FindPurl(purlId)
@@ -231,8 +231,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 			log.Println(err.Error())
-			return
 		}
+		return
 	}
 
 	repo_id, _ := strconv.Atoi(purl.Repo_obj_id)
@@ -269,6 +269,10 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		http.Error(w, "Content Unavailable", http.StatusInternalServerError)
+		return
+	}
 
 	datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
@@ -277,9 +281,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		log.Println(err)
-		return
 	}
-	return
 }
 
 /*
