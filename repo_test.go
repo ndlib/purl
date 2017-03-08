@@ -1,5 +1,8 @@
 // +build mysql
 
+// These tests assume the test/seed_data.sql file has been loaded
+// into the MySQL database.
+
 package main
 
 import (
@@ -14,9 +17,10 @@ import (
 func TestAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
-	result := datasource.AllPurls()
+	result := mysqlTarget.AllPurls()
 
 	for _, res := range result {
+		t.Log(res)
 		assert.NotEqual(res.Date_created, time.Time{}, "Time incorrectly set on repo")
 		assert.NotEqual(res.Id, nil, "Id nil")
 	}
@@ -25,7 +29,7 @@ func TestAllPurls(t *testing.T) {
 func TestFindPurl(t *testing.T) {
 	assert := assert.New(t)
 
-	result := datasource.FindPurl(5)
+	result := mysqlTarget.FindPurl(5)
 
 	assert.NotEqual(result.Date_created, time.Time{}, "Time incorrectly set on repo")
 	assert.NotEqual(result.Id, nil, "Id nil")
@@ -49,17 +53,22 @@ func TestCreatePurl(t *testing.T) {
 	newpurl.Last_accessed, _ = time.Parse(time.RFC3339, "2016-11-16T03:33:33Z")
 	newpurl.Date_created, _ = time.Parse(time.RFC3339, "2011-09-14T13:55:55Z")
 
-	datasource.CreatePurl(newpurl)
+	_ = mysqlTarget.destroyPurlDB(11)
+	mysqlTarget.CreatePurl(newpurl)
 
-	result := datasource.FindPurl(11)
+	result := mysqlTarget.FindPurl(11)
 
 	assert.Equal(result.Id, newpurl.Id, "Id not correct")
 	assert.Equal(result.Repo_obj_id, newpurl.Repo_obj_id, "Repo Id not correct")
 	assert.Equal(result.Last_accessed, newpurl.Last_accessed, "Last_accesed not correct")
 	assert.Equal(result.Date_created, newpurl.Date_created, "Date_created not correct")
 
-	// _ = datasource.destroyPurlDB(11)
+	_ = mysqlTarget.destroyPurlDB(11)
 }
+
+var (
+	mysqlTarget *purldb
+)
 
 func init() {
 	connection := os.Getenv("MYSQL_CONNECTION")
@@ -68,5 +77,5 @@ func init() {
 		fmt.Println("MYSQL_CONNECTION not set. Using default:", connection)
 	}
 
-	datasource = NewDBSource(connection)
+	mysqlTarget = NewDBSource(connection)
 }
