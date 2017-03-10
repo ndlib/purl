@@ -25,11 +25,11 @@ func TestShowFile(t *testing.T) {
 		{path: "/view/504/any.pdf", status: 200, body: "hello world",
 			headers: map[string]string{
 				"Content-Type":        "application/qqq",
-				"Content-Disposition": "inline; filename=$any.pdf"}},
+				"Content-Disposition": "inline; filename=any.pdf"}},
 		{path: "/view/505/any.pdf", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
-				"Content-Disposition": "inline; filename=$any.pdf"}},
+				"Content-Disposition": "inline; filename=any.pdf"}},
 	}
 
 	for _, test := range table {

@@ -11,14 +11,11 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
-
-var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
-var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
-var reZip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
 
 var (
 	txViewTemplate = template.Must(template.New("txinfo").Parse(`<html>
@@ -97,24 +94,30 @@ func Query(w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, query_body, http.StatusOK)
 }
 
+var attachmentExt = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+
 // Helper to set http.ResponseWriter
-func setResponseContent(w http.ResponseWriter, r *http.Response, file string) http.ResponseWriter {
+func setResponseContent(w http.ResponseWriter, r *http.Response, filename string) {
 	if r.ContentLength > 1 {
 		w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
 	}
 
-	filename := file
-
-	if reZip.MatchString(filename) {
-		file_value := "attachment; filename=" + filename
-		w.Header().Set("Content-Disposition", file_value)
+	// For certain file extensions, we set the download to be an "attachemnt"
+	// so a web browser will not try to open it in the browser window.
+	//
+	// We use the filename passed in through the URL, and not the filename
+	// stored in the purl record.
+	//
+	// All of this is previous behavior. Maybe it could be rethought out.
+	var disposition string
+	if attachmentExt.MatchString(filename) {
+		disposition = "attachment; filename=" + filename
 	} else {
-		file_value := "inline; filename=$" + filename
-		w.Header().Set("Content-Disposition", file_value)
+		disposition = "inline; filename=" + filename
 	}
+	w.Header().Set("Content-Disposition", disposition)
 	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
 	w.WriteHeader(http.StatusOK)
-	return w
 }
 
 // HANDLERS TO TAKE CARE OF THE WEBPAGES
@@ -174,6 +177,10 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var (
+	redirectPattern = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+)
+
 // Either copies over or redirects a file from a remote source
 func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -198,22 +205,26 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if we cannot proxy the file redirect to it
-	if regexpCurate.MatchString(repo.Information) {
+	// Some entries need a redirect and not a proxy. Determining that from
+	// special patterns in the information string is legacy behavior.
+	if redirectPattern.MatchString(repo.Information) {
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 		http.Redirect(w, r, repo.Url, 302)
 		return
 	}
 
-	// checks for fedora configuration information in env
-	fedorausername := os.Getenv("FEDORA_USER")
-	fedorapassword := os.Getenv("FEDORA_PASS")
-	var back_end_new = repo.Url
-	if fedorausername != "" && fedorapassword != "" {
-		repl := `http$1://` + fedorausername + `:` + fedorapassword + `$2`
-		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
+	proxyRequest, _ := http.NewRequest("GET", repo.Url, nil)
+	// this test is a little hokey. we don't need to send auth to non-fedora
+	// urls. We assume every fedora URL has the word "fedora" in it somewhere.
+	if strings.Contains(repo.Url, "fedora") {
+		// checks for fedora configuration information in env
+		fedorausername := os.Getenv("FEDORA_USER")
+		fedorapassword := os.Getenv("FEDORA_PASS")
+		if fedorausername != "" && fedorapassword != "" {
+			proxyRequest.SetBasicAuth(fedorausername, fedorapassword)
+		}
 	}
-	resp, err := http.Get(back_end_new)
+	resp, err := http.DefaultClient.Do(proxyRequest)
 	if err != nil {
 		log.Println("Unable to grab url:", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -227,9 +238,13 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 
 	datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
-	w = setResponseContent(w, resp, vars["filename"])
+	setResponseContent(w, resp, vars["filename"])
 
-	_, err = io.Copy(w, resp.Body)
+	if r.ContentLength > 0 {
+		_, err = io.CopyN(w, resp.Body, r.ContentLength)
+	} else {
+		_, err = io.Copy(w, resp.Body)
+	}
 	if err != nil {
 		log.Println(err)
 	}
