@@ -238,6 +238,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 
 	datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
+	// this uses the filename that the client passed us...should we use
+	// the filename stored in the purl record instead?
 	setResponseContent(w, resp, vars["filename"])
 
 	if r.ContentLength > 0 {

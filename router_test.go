@@ -19,17 +19,34 @@ func TestShowFile(t *testing.T) {
 		{path: "/view/123456789/any.pdf", status: 404, body: `{"code":404,"text":"Not Found"}` + "\n",
 			headers: map[string]string{"Content-Type": "application/json; charset=UTF-8"}},
 		{path: "/view/500/any.pdf", status: 200, body: "a very good file"},
+		// upstream is 404
 		{path: "/view/501/any.pdf", status: 500, body: "Content Unavailable\n"},
+		// redirects? (vs proxy)
 		{path: "/view/502/any.pdf", status: 500, body: "hello world"},
 		{path: "/view/503/any.pdf", status: 200, body: "hello world"},
+		// propagate content type from upstream?
 		{path: "/view/504/any.pdf", status: 200, body: "hello world",
 			headers: map[string]string{
 				"Content-Type":        "application/qqq",
 				"Content-Disposition": "inline; filename=any.pdf"}},
+		// propagage content length from upstream?
 		{path: "/view/505/any.pdf", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
 				"Content-Disposition": "inline; filename=any.pdf"}},
+		// test the inline/attachment switch (.zip, .ovf, .vmdk extensions)
+		{path: "/view/505/any.zip", status: 200, body: "a very",
+			headers: map[string]string{
+				"Content-Length":      "6",
+				"Content-Disposition": "attachment; filename=any.zip"}},
+		{path: "/view/505/any.ovf", status: 200, body: "a very",
+			headers: map[string]string{
+				"Content-Length":      "6",
+				"Content-Disposition": "attachment; filename=any.ovf"}},
+		{path: "/view/505/any.vmdk", status: 200, body: "a very",
+			headers: map[string]string{
+				"Content-Length":      "6",
+				"Content-Disposition": "attachment; filename=any.vmdk"}},
 	}
 
 	for _, test := range table {
