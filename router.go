@@ -9,90 +9,41 @@ import (
 )
 
 type route struct {
-	Name        string
 	Method      string
 	Pattern     string
 	HandlerFunc http.HandlerFunc
 }
 
 var repoRoutes = []route{
-	route{
-		"Index",
-		"GET",
-		"/",
-		Index,
-	},
-	route{
-		"AdminIndex",
-		"GET",
-		"/admin",
-		AdminIndex,
-	},
-	route{
-		"PurlIndex",
-		"GET",
-		"/purls",
-		PurlIndex,
-	},
-	route{
-		"PurlCreate",
-		"POST",
-		"/purl/create",
-		PurlCreate,
-	},
-	route{
-		"PurlShow",
-		"GET",
-		"/view/{purlId}",
-		PurlShow,
-	},
-	route{
-		"PurlShowFile",
-		"GET",
-		"/view/{purlId}/{filename}",
-		PurlShowFile,
-	},
-	route{
-		"Query",
-		"GET",
-		"/query?={query}",
-		Query,
-	},
+	{"GET", "/", Index},
+	{"GET", "/admin", AdminIndex},
+	{"GET", "/purls", PurlIndex},
+	{"POST", "/purl/create", PurlCreate},
+	{"GET", "/view/{purlId}", PurlShow},
+	{"GET", "/view/{purlId}/{filename}", PurlShowFile},
+	{"GET", "/query?={query}", Query},
 }
 
 // Our initial router
-func NewRouter() *mux.Router {
+func NewRouter() http.Handler {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range repoRoutes {
-		var handler http.Handler
-
-		handler = route.HandlerFunc
-		handler = Logger(handler, route.Name)
-
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
-			Name(route.Name).
-			Handler(handler)
-
+			Handler(route.HandlerFunc)
 	}
 
-	return router
+	return &LogHandler{router}
 }
 
-// Logger returns a Handler that wraps inner and logs the request path and duration at the end.
-func Logger(inner http.Handler, name string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+// Logger wraps a handler and logs the request path and duration at the end.
+type LogHandler struct {
+	h http.Handler
+}
 
-		inner.ServeHTTP(w, r)
-
-		log.Printf(
-			"%s\t%s\t%s\t%s",
-			r.Method,
-			r.RequestURI,
-			name,
-			time.Since(start),
-		)
-	})
+func (lh *LogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	lh.h.ServeHTTP(w, r)
+	log.Println(r.Method, r.RequestURI, time.Since(start))
 }

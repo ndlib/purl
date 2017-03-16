@@ -232,6 +232,7 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		log.Println("upstream returned", resp.StatusCode, repo.Url)
 		http.Error(w, "Content Unavailable", http.StatusInternalServerError)
 		return
 	}
