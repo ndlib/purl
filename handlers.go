@@ -11,19 +11,11 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 )
-
-type jsonErr struct {
-	Code int    `json:"code"`
-	Text string `json:"text"`
-}
-
-var regexpCurate *regexp.Regexp = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
-var reHttp *regexp.Regexp = regexp.MustCompile(`http(s?)://(.+)`)
-var reZip *regexp.Regexp = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
 
 var (
 	txViewTemplate = template.Must(template.New("txinfo").Parse(`<html>
@@ -69,53 +61,63 @@ var (
 	</body></html>`))
 )
 
+// sendJSON set the response code to the given status, and then writes the JSON
+// serialization of data to w. Errors are logged.
+func sendJSON(w http.ResponseWriter, data interface{}, status int) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+type jsonErr struct {
+	Code int    `json:"code"`
+	Text string `json:"text"`
+}
+
+func sendNotFound(w http.ResponseWriter) {
+	data := jsonErr{Code: http.StatusNotFound, Text: "Not Found"}
+	sendJSON(w, data, http.StatusNotFound)
+}
+
 // HELPERS FOR THE HANDLERS
 func Query(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
 	query_body := datasource.FindQuery(query)
-	if query_body != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(query_body); err != nil {
-			log.Println(err.Error())
-			return
-		}
+	if query_body == nil {
+		sendNotFound(w)
 		return
 	}
-
-	// If we didn't find it, 404
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusNotFound)
-	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-		log.Println(err.Error())
-		return
-	}
+	sendJSON(w, query_body, http.StatusOK)
 }
 
+var attachmentExt = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
+
 // Helper to set http.ResponseWriter
-func setResponseContent(w http.ResponseWriter, r *http.Response, file string) http.ResponseWriter {
+func setResponseContent(w http.ResponseWriter, r *http.Response, filename string) {
 	if r.ContentLength > 1 {
 		w.Header().Set("Content-Length", strconv.FormatInt(r.ContentLength, 10))
-	} else if r.ContentLength < 0 {
-		// fedora does not handle large file sizes correctly in HEAD requests to the legacy API.
-		// un 2s-complement the number for it.
-		con_length := (int64(1) << 32) + int64(r.ContentLength)
-		w.Header().Set("Content-Length", strconv.FormatInt(con_length, 10))
 	}
 
-	filename := file
-
-	if reZip.MatchString(filename) {
-		file_value := "attachment; filename=" + filename
-		w.Header().Set("Content-Disposition", file_value)
+	// For certain file extensions, we set the download to be an "attachemnt"
+	// so a web browser will not try to open it in the browser window.
+	//
+	// We use the filename passed in through the URL, and not the filename
+	// stored in the purl record.
+	//
+	// All of this is previous behavior. Maybe it could be rethought out.
+	var disposition string
+	if attachmentExt.MatchString(filename) {
+		disposition = "attachment; filename=" + filename
 	} else {
-		file_value := "inline; filename=$" + filename
-		w.Header().Set("Content-Disposition", file_value)
+		disposition = "inline; filename=" + filename
 	}
+	w.Header().Set("Content-Disposition", disposition)
 	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
 	w.WriteHeader(http.StatusOK)
-	return w
 }
 
 // HANDLERS TO TAKE CARE OF THE WEBPAGES
@@ -125,63 +127,33 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 // shows all purls
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 	ps := datasource.AllPurls()
-	if err := json.NewEncoder(w).Encode(ps); err != nil {
-		log.Println(err.Error())
-		return
-	}
+	sendJSON(w, ps, http.StatusOK)
 }
 
 // admin interface
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 	ps := datasource.AllPurls()
-	if err := json.NewEncoder(w).Encode(len(ps)); err != nil {
-		log.Println(err.Error())
-		return
-	}
+	sendJSON(w, len(ps), http.StatusOK)
 }
 
 // gives back specific purl
 func PurlShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	var purlId int
-	var err error
-	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Println(err.Error())
-			return
-		}
+	purlId, err := strconv.Atoi(vars["purlId"])
+	if err != nil {
+		sendNotFound(w)
+		return
 	}
 	purl := datasource.FindPurl(purlId)
 	repoId, _ := strconv.Atoi(purl.Repo_obj_id)
 	repo := datasource.FindRepoObj(repoId)
 	if purl.Id == 0 || repo.Id == 0 {
-		// If we didn't find it, 404
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Println(err.Error())
-		}
+		sendNotFound(w)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	// t, err := template.New("mytmpl", Asset).Parse("data/view.html")
-	if err != nil {
-		// asset not found, back up plan
-		if err := json.NewEncoder(w).Encode(purl); err != nil {
-			log.Println(err.Error())
-			return
-		}
-	}
-
 	M := struct {
 		Id            int
 		Information   string
@@ -199,39 +171,28 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 		purl.Last_accessed,
 		purl.Access_count,
 	}
-	if err := txViewTemplate.Execute(w, M); err != nil {
+	err = txViewTemplate.Execute(w, M)
+	if err != nil {
 		log.Println(err.Error())
-		return
 	}
-	return
 }
+
+var (
+	redirectPattern = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
+)
 
 // Either copies over or redirects a file from a remote source
 func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	var (
-		purlId int
-		err    error
-	)
-
-	if purlId, err = strconv.Atoi(vars["purlId"]); err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Println(err.Error())
-		}
+	purlId, err := strconv.Atoi(vars["purlId"])
+	if err != nil {
+		sendNotFound(w)
 		return
 	}
 
 	purl := datasource.FindPurl(purlId)
-
 	if purl.Id == 0 {
-		// If we didn't find it, 404
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-			log.Println(err.Error())
-		}
+		sendNotFound(w)
 		return
 	}
 
@@ -244,25 +205,26 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if we cannot proxy the file redirect to it
-	if regexpCurate.MatchString(repo.Information) {
+	// Some entries need a redirect and not a proxy. Determining that from
+	// special patterns in the information string is legacy behavior.
+	if redirectPattern.MatchString(repo.Information) {
 		datasource.LogRecordAccess(r, repo.Id, purl.Id)
 		http.Redirect(w, r, repo.Url, 302)
 		return
 	}
 
-	// checks for fedora configuration information in env
-	fedorausername := os.Getenv("FEDORA_USER")
-	fedorapassword := os.Getenv("FEDORA_PASS")
-	var back_end_new string
-	if fedorausername != "" && fedorapassword != "" {
-		repl := `http$1://` + fedorausername + `:` + fedorapassword + `$2`
-		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
-	} else {
-		repl := `http$1://$2`
-		back_end_new = reHttp.ReplaceAllString(repo.Url, repl)
+	proxyRequest, _ := http.NewRequest("GET", repo.Url, nil)
+	// this test is a little hokey. we don't need to send auth to non-fedora
+	// urls. We assume every fedora URL has the word "fedora" in it somewhere.
+	if strings.Contains(repo.Url, "fedora") {
+		// checks for fedora configuration information in env
+		fedorausername := os.Getenv("FEDORA_USER")
+		fedorapassword := os.Getenv("FEDORA_PASS")
+		if fedorausername != "" && fedorapassword != "" {
+			proxyRequest.SetBasicAuth(fedorausername, fedorapassword)
+		}
 	}
-	resp, err := http.Get(back_end_new)
+	resp, err := http.DefaultClient.Do(proxyRequest)
 	if err != nil {
 		log.Println("Unable to grab url:", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -276,9 +238,15 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 
 	datasource.LogRecordAccess(r, repo.Id, purl.Id)
 
-	w = setResponseContent(w, resp, vars["filename"])
+	// this uses the filename that the client passed us...should we use
+	// the filename stored in the purl record instead?
+	setResponseContent(w, resp, vars["filename"])
 
-	_, err = io.Copy(w, resp.Body)
+	if r.ContentLength > 0 {
+		_, err = io.CopyN(w, resp.Body, r.ContentLength)
+	} else {
+		_, err = io.Copy(w, resp.Body)
+	}
 	if err != nil {
 		log.Println(err)
 	}
@@ -300,15 +268,12 @@ func PurlCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.Unmarshal(body, &purl); err != nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(422) // unprocessable entity
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Println(err.Error())
-			return
-		}
+		sendJSON(w, err, 422) // unprocessable entity
+		return
 	}
 
 	datasource.CreatePurl(purl)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
+	// should a response body be returned?
 }
