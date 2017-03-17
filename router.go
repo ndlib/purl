@@ -24,7 +24,7 @@ var repoRoutes = []route{
 	{"GET", "/query?={query}", Query},
 }
 
-// Our initial router
+// NewRouter returns a Handler that will take care of all the repopurl routes.
 func NewRouter() http.Handler {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range repoRoutes {
@@ -37,7 +37,7 @@ func NewRouter() http.Handler {
 	return &LogHandler{router}
 }
 
-// Logger wraps a handler and logs the request path and duration at the end.
+// LogHandler wraps a handler and logs the request path and duration at the end.
 type LogHandler struct {
 	h http.Handler
 }

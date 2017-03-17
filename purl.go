@@ -4,21 +4,25 @@ import (
 	"time"
 )
 
+// A Purl represents a single redirect in the database.
 type Purl struct {
-	Id            int       `json:"id"`
-	Repo_obj_id   string    `json:"repo_obj_id"`
-	Access_count  int       `json:"access_count"`
-	Last_accessed time.Time `json:"last_accessed"`
-	Source_app    string    `json:"source_app"`
-	Date_created  time.Time `json:"date_created"`
+	ID           int       `json:"id"`
+	RepoObjID    string    `json:"repo_obj_id"`
+	AccessCount  int       `json:"access_count"`
+	LastAccessed time.Time `json:"last_accessed"`
+	SourceApp    string    `json:"source_app"`
+	DateCreated  time.Time `json:"date_created"`
 }
 
+// A RepoObj is a braindead structure needed because we are mirroring
+// how the PURLs are stored in the database. For the most part there
+// is always a one-to-one relationship between a Purl and a RepoObj.
 type RepoObj struct {
-	Id            int       `json:"id"`
-	Filename      string    `json:"filename"`
-	Url           string    `json:"filename"`
-	Date_added    time.Time `json:"date_added"`
-	Add_source_ip string    `json:"add_source_ip"`
-	Date_modified time.Time `json:"date_modified"`
-	Information   string    `json:"information"`
+	ID           int       `json:"id"`
+	Filename     string    `json:"filename"`
+	URL          string    `json:"URL"`
+	DateAdded    time.Time `json:"date_added"`
+	AddSourceIP  string    `json:"add_source_ip"`
+	DateModified time.Time `json:"date_modified"`
+	Information  string    `json:"information"`
 }

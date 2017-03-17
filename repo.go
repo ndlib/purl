@@ -24,5 +24,5 @@ type Repository interface {
 
 	CreateRepo(t RepoObj)
 
-	LogRecordAccess(vars *http.Request, repo_id int, p_id int)
+	LogRecordAccess(vars *http.Request, repoID int, purlID int)
 }

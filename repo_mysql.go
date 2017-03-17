@@ -22,7 +22,8 @@ func updateWait(wait int) int {
 	return wait
 }
 
-// Allows for the new database connection to be created
+// NewDBSource returns a Repository backed by a MySQL database, as determined
+// by the connection string.
 func NewDBSource(mysqlconn string) *purldb {
 	mysqlconn = mysqlconn + "?parseTime=true"
 	db, err := sql.Open("mysql", mysqlconn)
@@ -51,7 +52,7 @@ func (sq *purldb) createPurlDB(purl Purl) sql.Result {
 	(?, ?, ?, ?, ?)`
 	result, err := sq.db.Exec(
 		qstring,
-		purl.Id, purl.Repo_obj_id, purl.Last_accessed, purl.Source_app, purl.Date_created,
+		purl.ID, purl.RepoObjID, purl.LastAccessed, purl.SourceApp, purl.DateCreated,
 	)
 	if err != nil {
 		log.Printf("Error creating purl: %s", err.Error())
@@ -80,7 +81,7 @@ func (sq *purldb) createRepoDB(repo RepoObj) sql.Result {
 	($1, $2, $3, $4, $5, $6, $7)`
 	result, err := sq.db.Exec(
 		qstring,
-		repo.Id, repo.Filename, repo.Url, repo.Date_added, repo.Add_source_ip, repo.Date_modified, repo.Information,
+		repo.ID, repo.Filename, repo.URL, repo.DateAdded, repo.AddSourceIP, repo.DateModified, repo.Information,
 	)
 	if err != nil {
 		log.Printf("Error creating repo: %s", err.Error())
@@ -92,16 +93,15 @@ func (sq *purldb) createRepoDB(repo RepoObj) sql.Result {
 // returns an empty object if there is an
 // error
 
-func (sq *purldb) queryDB(id int, table string, table_id string) (*sql.Rows, error) {
+func (sq *purldb) queryDB(id int, table string, tableID string) (*sql.Rows, error) {
 	if id == -1 {
 		qstring := "select * from " + table
 		return sq.db.Query(qstring)
-	} else {
-		qstring := "select * from " + table + " where " + table_id + " = ?"
-		upstring := "UPDATE purl SET access_count = access_count + 1, last_accessed = NOW()"
-		_, _ = sq.db.Query(upstring, id)
-		return sq.db.Query(qstring, id)
 	}
+	qstring := "select * from " + table + " where " + tableID + " = ?"
+	upstring := "UPDATE purl SET access_count = access_count + 1, last_accessed = NOW()"
+	_, _ = sq.db.Query(upstring, id)
+	return sq.db.Query(qstring, id)
 }
 
 // PURL OBJECT RETRIEVAL
@@ -152,26 +152,26 @@ func (sq *purldb) AllRepos() []RepoObj {
 	return result
 }
 
-// HELPER TO GRAB PURL FILES
+// ScanPurlDB reads the current row in rows and returns a Purl.
 func ScanPurlDB(rows *sql.Rows) Purl {
-	var temp_purl Purl
-	var last_accessed mysql.NullTime
-	var source_app sql.NullString
+	var tempPurl Purl
+	var lastAccessed mysql.NullTime
+	var sourceApp sql.NullString
 	err := rows.Scan(
-		&temp_purl.Id, &temp_purl.Repo_obj_id, &temp_purl.Access_count,
-		&last_accessed, &source_app, &temp_purl.Date_created,
+		&tempPurl.ID, &tempPurl.RepoObjID, &tempPurl.AccessCount,
+		&lastAccessed, &sourceApp, &tempPurl.DateCreated,
 	)
 	if err != nil {
 		log.Printf("Scan not succeeded: %s", err)
-		return temp_purl
+		return tempPurl
 	}
-	if last_accessed.Valid {
-		temp_purl.Last_accessed = last_accessed.Time
+	if lastAccessed.Valid {
+		tempPurl.LastAccessed = lastAccessed.Time
 	}
-	if source_app.Valid {
-		temp_purl.Source_app = source_app.String
+	if sourceApp.Valid {
+		tempPurl.SourceApp = sourceApp.String
 	}
-	return temp_purl
+	return tempPurl
 }
 
 // PURL OBJECT SEARCH AND RETRIEVAL
@@ -189,24 +189,24 @@ func (sq *purldb) FindPurl(id int) Purl {
 	return result
 }
 
-// HELPER TO GRAB REPO FILES
+// ScanRepoDB reads the current row in rows and returns a corresponding RepoObj.
 func ScanRepoDB(rows *sql.Rows) RepoObj {
-	var temp_repo RepoObj
-	var date_modified mysql.NullTime
+	var tempRepo RepoObj
+	var dateModified mysql.NullTime
 	var information sql.NullString
-	err := rows.Scan(&temp_repo.Id, &temp_repo.Filename, &temp_repo.Url, &temp_repo.Date_added,
-		&temp_repo.Add_source_ip, &date_modified, &information)
+	err := rows.Scan(&tempRepo.ID, &tempRepo.Filename, &tempRepo.URL, &tempRepo.DateAdded,
+		&tempRepo.AddSourceIP, &dateModified, &information)
 	if err != nil {
 		log.Printf("Scan not succeeded: %s", err)
-		return temp_repo
+		return tempRepo
 	}
-	if date_modified.Valid {
-		temp_repo.Date_modified = date_modified.Time
+	if dateModified.Valid {
+		tempRepo.DateModified = dateModified.Time
 	}
 	if information.Valid {
-		temp_repo.Information = information.String
+		tempRepo.Information = information.String
 	}
-	return temp_repo
+	return tempRepo
 }
 
 // REPO OBJECT SEARCH AND RETRIEVAL
@@ -259,14 +259,14 @@ func (sq *purldb) CreateRepo(t RepoObj) {
 }
 
 // LOGS ACCESS TO THE DATABASE
-func (sq *purldb) LogRecordAccess(r *http.Request, repo_id int, p_id int) {
+func (sq *purldb) LogRecordAccess(r *http.Request, repoID int, purlID int) {
 	upstring := `INSERT INTO object_access
 	(date_accessed, ip_address, host_name, referer, user_agent, request_method, path_info, repo_object_id, purl_id)
 	VALUES
 	(now(),?,?,?,?,?,?,?,?)`
 	_, err := sq.db.Exec(
 		upstring, r.RemoteAddr, r.Host, r.Referer(), r.UserAgent(),
-		r.Method, r.URL.Path, repo_id, p_id,
+		r.Method, r.URL.Path, repoID, purlID,
 	)
 	if err != nil {
 		log.Printf("Problem updating access to database: %s", err.Error())

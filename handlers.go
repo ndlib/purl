@@ -32,7 +32,7 @@ var (
 	        <tbody>
 	            <tr>
 	                <td>ID</td>
-	                <td>{{.Id}}</td>
+	                <td>{{.ID}}</td>
 	            </tr>
 	            <tr>
 	                <td>Note</td>
@@ -40,19 +40,19 @@ var (
 	            </tr>
 	            <tr>
 	                <td>File Name</td>
-	                <td>{{.File_name}}</td>
+	                <td>{{.Filename}}</td>
 	            </tr>
 	            <tr>
 	                <td>Last Accessed</td>
-	                <td>{{.Last_accessed}}</td>
+	                <td>{{.LastAccessed}}</td>
 	            </tr>
 	            <tr>
 	                <td>Repository URL</td>
-	                <td><a href="{{.Repo_url}}">{{.Repo_url}} </a></td>
+	                <td><a href="{{.RepoURL}}">{{.RepoURL}} </a></td>
 	            </tr>
 	            <tr>
 	                <td>Access Count</td>
-	                <td>{{.Access_count}}</td>
+	                <td>{{.AccessCount}}</td>
 	            </tr>
 	        </tbody>
 	    </table>
@@ -83,15 +83,17 @@ func sendNotFound(w http.ResponseWriter) {
 }
 
 // HELPERS FOR THE HANDLERS
+
+// Query handles the route "/query"
 func Query(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
-	query_body := datasource.FindQuery(query)
-	if query_body == nil {
+	results := datasource.FindQuery(query)
+	if results == nil {
 		sendNotFound(w)
 		return
 	}
-	sendJSON(w, query_body, http.StatusOK)
+	sendJSON(w, results, http.StatusOK)
 }
 
 var attachmentExt = regexp.MustCompile(`\b(ovf$)|\b(zip$)|\b(vmdk$)`)
@@ -121,55 +123,57 @@ func setResponseContent(w http.ResponseWriter, r *http.Response, filename string
 }
 
 // HANDLERS TO TAKE CARE OF THE WEBPAGES
+
+// Index handles the root route.
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Cat Game.\n")
 }
 
-// shows all purls
+// PurlIndex returns a list of every PURL to w.
 func PurlIndex(w http.ResponseWriter, r *http.Request) {
 	ps := datasource.AllPurls()
 	sendJSON(w, ps, http.StatusOK)
 }
 
-// admin interface
+// AdminIndex returns the number of purls to w.
 func AdminIndex(w http.ResponseWriter, r *http.Request) {
 	ps := datasource.AllPurls()
 	sendJSON(w, len(ps), http.StatusOK)
 }
 
-// gives back specific purl
+// PurlShow returns metadata for the given PURL to w.
 func PurlShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	purlId, err := strconv.Atoi(vars["purlId"])
+	purlID, err := strconv.Atoi(vars["purlId"])
 	if err != nil {
 		sendNotFound(w)
 		return
 	}
-	purl := datasource.FindPurl(purlId)
-	repoId, _ := strconv.Atoi(purl.Repo_obj_id)
-	repo := datasource.FindRepoObj(repoId)
-	if purl.Id == 0 || repo.Id == 0 {
+	purl := datasource.FindPurl(purlID)
+	repoID, _ := strconv.Atoi(purl.RepoObjID)
+	repo := datasource.FindRepoObj(repoID)
+	if purl.ID == 0 || repo.ID == 0 {
 		sendNotFound(w)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	M := struct {
-		Id            int
-		Information   string
-		File_name     string
-		Repo_url      string
-		Repo_obj_id   string
-		Last_accessed time.Time
-		Access_count  int
+		ID           int
+		Information  string
+		Filename     string
+		RepoURL      string
+		RepoObjID    string
+		LastAccessed time.Time
+		AccessCount  int
 	}{
-		purl.Id,
+		purl.ID,
 		repo.Information,
 		repo.Filename,
-		repo.Url,
-		purl.Repo_obj_id,
-		purl.Last_accessed,
-		purl.Access_count,
+		repo.URL,
+		purl.RepoObjID,
+		purl.LastAccessed,
+		purl.AccessCount,
 	}
 	err = txViewTemplate.Execute(w, M)
 	if err != nil {
@@ -181,25 +185,27 @@ var (
 	redirectPattern = regexp.MustCompile(`^(CurateND - |Reformatting Unit:)`)
 )
 
-// Either copies over or redirects a file from a remote source
+// PurlShowFile returns either the upstream content of this PURL or
+// a redirect to the upstream content. The decision depends on the contents
+// of the Information field in the PURL.
 func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	purlId, err := strconv.Atoi(vars["purlId"])
+	purlID, err := strconv.Atoi(vars["purlId"])
 	if err != nil {
 		sendNotFound(w)
 		return
 	}
 
-	purl := datasource.FindPurl(purlId)
-	if purl.Id == 0 {
+	purl := datasource.FindPurl(purlID)
+	if purl.ID == 0 {
 		sendNotFound(w)
 		return
 	}
 
-	repo_id, _ := strconv.Atoi(purl.Repo_obj_id)
-	repo := datasource.FindRepoObj(repo_id)
+	repoID, _ := strconv.Atoi(purl.RepoObjID)
+	repo := datasource.FindRepoObj(repoID)
 
-	if repo.Id != repo_id {
+	if repo.ID != repoID {
 		log.Println("Could not return correct repo object")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -208,15 +214,15 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	// Some entries need a redirect and not a proxy. Determining that from
 	// special patterns in the information string is legacy behavior.
 	if redirectPattern.MatchString(repo.Information) {
-		datasource.LogRecordAccess(r, repo.Id, purl.Id)
-		http.Redirect(w, r, repo.Url, 302)
+		datasource.LogRecordAccess(r, repo.ID, purl.ID)
+		http.Redirect(w, r, repo.URL, 302)
 		return
 	}
 
-	proxyRequest, _ := http.NewRequest("GET", repo.Url, nil)
+	proxyRequest, _ := http.NewRequest("GET", repo.URL, nil)
 	// this test is a little hokey. we don't need to send auth to non-fedora
 	// urls. We assume every fedora URL has the word "fedora" in it somewhere.
-	if strings.Contains(repo.Url, "fedora") {
+	if strings.Contains(repo.URL, "fedora") {
 		// checks for fedora configuration information in env
 		fedorausername := os.Getenv("FEDORA_USER")
 		fedorapassword := os.Getenv("FEDORA_PASS")
@@ -232,12 +238,12 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Println("upstream returned", resp.StatusCode, repo.Url)
+		log.Println("upstream returned", resp.StatusCode, repo.URL)
 		http.Error(w, "Content Unavailable", http.StatusInternalServerError)
 		return
 	}
 
-	datasource.LogRecordAccess(r, repo.Id, purl.Id)
+	datasource.LogRecordAccess(r, repo.ID, purl.ID)
 
 	// this uses the filename that the client passed us...should we use
 	// the filename stored in the purl record instead?
@@ -257,6 +263,8 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 Test with this curl command:
 curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/purl/create
 */
+
+// PurlCreate adds a new purl to the database.
 func PurlCreate(w http.ResponseWriter, r *http.Request) {
 	var purl Purl
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))

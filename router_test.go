@@ -103,47 +103,47 @@ func init() {
 	// now seed data that points to the dummy server
 	seedItems := []RepoObj{
 		{
-			Id:          500,
+			ID:          500,
 			Filename:    "good.pdf",
-			Url:         dummyServer.URL + "/200?data=a+very+good+file",
+			URL:         dummyServer.URL + "/200?data=a+very+good+file",
 			Information: "",
 		},
 		{
-			Id:          501,
+			ID:          501,
 			Filename:    "bad.pdf",
-			Url:         dummyServer.URL + "/404",
+			URL:         dummyServer.URL + "/404",
 			Information: "item title",
 		},
 		{
-			Id:          502,
+			ID:          502,
 			Filename:    "redirect",
-			Url:         dummyServer.URL + "/500",
+			URL:         dummyServer.URL + "/500",
 			Information: "CurateND - item page",
 		},
 		{
-			Id:          503,
+			ID:          503,
 			Filename:    "redirect",
-			Url:         dummyServer.URL + "/200",
+			URL:         dummyServer.URL + "/200",
 			Information: "Reformatting Unit: item name",
 		},
 		{
-			Id:          504,
+			ID:          504,
 			Filename:    "best.pdf",
-			Url:         dummyServer.URL + "/200?type=application/qqq",
+			URL:         dummyServer.URL + "/200?type=application/qqq",
 			Information: "",
 		},
 		{
-			Id:          505,
+			ID:          505,
 			Filename:    "longfilename.pdf",
-			Url:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
+			URL:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
 			Information: "",
 		},
 	}
 	for _, seed := range seedItems {
 		memory.CreateRepo(seed)
 		memory.CreatePurl(Purl{
-			Id:          seed.Id,
-			Repo_obj_id: fmt.Sprintf("%d", seed.Id),
+			ID:        seed.ID,
+			RepoObjID: fmt.Sprintf("%d", seed.ID),
 		})
 	}
 }

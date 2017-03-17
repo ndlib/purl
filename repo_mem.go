@@ -40,7 +40,7 @@ func (mr *memoryRepo) FindPurl(id int) Purl {
 	mr.m.RLock()
 	defer mr.m.RUnlock()
 	for _, t := range mr.purls {
-		if t.Id == id {
+		if t.ID == id {
 			return t
 		}
 	}
@@ -52,7 +52,7 @@ func (mr *memoryRepo) FindRepoObj(id int) RepoObj {
 	mr.m.RLock()
 	defer mr.m.RUnlock()
 	for _, r := range mr.repos {
-		if r.Id == id {
+		if r.ID == id {
 			return r
 		}
 	}
@@ -74,9 +74,9 @@ func (mr *memoryRepo) FindQuery(query string) []RepoObj {
 func (mr *memoryRepo) CreatePurl(t Purl) {
 	mr.m.Lock()
 	defer mr.m.Unlock()
-	if t.Id == 0 {
-		mr.currentID += 1
-		t.Id = mr.currentID
+	if t.ID == 0 {
+		mr.currentID++
+		t.ID = mr.currentID
 	}
 	mr.purls = append(mr.purls, t)
 }
@@ -87,7 +87,7 @@ func (mr *memoryRepo) CreateRepo(t RepoObj) {
 	mr.repos = append(mr.repos, t)
 }
 
-func (mr *memoryRepo) LogRecordAccess(vars *http.Request, repo_id int, p_id int) {
+func (mr *memoryRepo) LogRecordAccess(vars *http.Request, repoID int, purlID int) {
 	return
 }
 
@@ -95,7 +95,7 @@ func (mr *memoryRepo) DestroyPurl(id int) error {
 	mr.m.Lock()
 	defer mr.m.Unlock()
 	for i, t := range mr.purls {
-		if t.Id == id {
+		if t.ID == id {
 			mr.purls = append(mr.purls[:i], mr.purls[i+1:]...)
 			return nil
 		}
