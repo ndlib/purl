@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -29,13 +30,16 @@ func TestAllPurls(t *testing.T) {
 func TestFindPurl(t *testing.T) {
 	assert := assert.New(t)
 
-	result := mysqlTarget.FindPurl(5)
+	result, ok := mysqlTarget.FindPurl(5)
+	if !ok {
+		t.Fatal("Couldn't find record")
+	}
 
 	assert.NotEqual(result.DateCreated, time.Time{}, "Time incorrectly set on repo")
 	assert.NotEqual(result.ID, nil, "ID nil")
 
 	assert.Equal(result.ID, 5, "ID not correct")
-	assert.Equal(result.RepoObjID, "5", "Repo ID not correct")
+	assert.Equal(result.RepoID, "5", "Repo ID not correct")
 	assert.Equal(result.AccessCount, 625, "AccessCount not correct")
 	time_val, _ := time.Parse(time.RFC3339, "2016-11-15T14:16:14Z")
 	assert.Equal(result.LastAccessed, time_val, "LastAccesed not correct")
@@ -43,31 +47,36 @@ func TestFindPurl(t *testing.T) {
 	assert.Equal(result.DateCreated, time_val, "DateCreated not correct")
 }
 
-func TestCreatePurl(t *testing.T) {
-	assert := assert.New(t)
+func getaccesscount(purlID int) int {
+	var count int
+	mysqlTarget.db.QueryRow("SELECT access_count FROM purl WHERE purl_id = ?", purlID).Scan(&count)
+	return count
+}
 
-	var newpurl = Purl{
-		ID:        11,
-		RepoObjID: "110",
+func TestLogRecordAccess(t *testing.T) {
+	// get starting count, date/time
+	firstCount := getaccesscount(10)
+
+	// does this update last accessed?
+	purl, _ := mysqlTarget.FindPurl(10)
+
+	secondCount := getaccesscount(10)
+	if firstCount != secondCount {
+		t.Error("access count changed", firstCount, secondCount)
 	}
-	newpurl.LastAccessed, _ = time.Parse(time.RFC3339, "2016-11-16T03:33:33Z")
-	newpurl.DateCreated, _ = time.Parse(time.RFC3339, "2011-09-14T13:55:55Z")
 
-	_ = mysqlTarget.destroyPurlDB(11)
-	mysqlTarget.CreatePurl(newpurl)
+	// does this update last accessed?
+	req, _ := http.NewRequest("GET", "/", nil)
+	mysqlTarget.LogAccess(req, purl)
 
-	result := mysqlTarget.FindPurl(11)
-
-	assert.Equal(result.ID, newpurl.ID, "ID not correct")
-	assert.Equal(result.RepoObjID, newpurl.RepoObjID, "Repo ID not correct")
-	assert.Equal(result.LastAccessed, newpurl.LastAccessed, "LastAccesed not correct")
-	assert.Equal(result.DateCreated, newpurl.DateCreated, "DateCreated not correct")
-
-	_ = mysqlTarget.destroyPurlDB(11)
+	thirdCount := getaccesscount(10)
+	if thirdCount != firstCount+1 {
+		t.Error("Found", thirdCount, "expected", firstCount+1)
+	}
 }
 
 var (
-	mysqlTarget *purldb
+	mysqlTarget *mysqlDB
 )
 
 func init() {
@@ -77,5 +86,9 @@ func init() {
 		fmt.Println("MYSQL_CONNECTION not set. Using default:", connection)
 	}
 
-	mysqlTarget = NewDBSource(connection)
+	r, err := NewMySQL(connection)
+	if err != nil {
+		panic(err)
+	}
+	mysqlTarget = r.(*mysqlDB)
 }

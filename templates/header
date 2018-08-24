@@ -1,0 +1,29 @@
+{{/* This template expects dot to be a string giving the title of the page
+*/}}<!doctype html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8"/>
+    <title>Hesburgh Libraries Permanent URL System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <!-- Feel free to split the CSS into separate files, if you like. -->
+    <style type="text/css">
+    {{template "css"}}
+    </style>
+</head>
+<body>
+<div id="header">
+<ul id="nav-util">
+    <li id="searchli">
+        <form role="search" id="search" action="/admin/search" method="get" class="small">
+            <label for="search-input">Search PURLs</label>
+            <input type="text" tabindex="1" placeholder="Search PURLs" id="search-input" name="q">
+            <button id="search-button" type="submit">Search</button>
+        </form>
+    </li>
+</ul>
+</div>
+<div id="main_content">
+    <div class="full">
+        <h2>{{ . }}</h2>
+    </div>

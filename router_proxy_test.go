@@ -6,7 +6,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -40,8 +39,6 @@ func TestRouterProxy(t *testing.T) {
 		if resp.StatusCode != test.status {
 			t.Errorf("On %s received status %d, expected %d", test.path, resp.StatusCode, test.status)
 		}
-		b, _ := ioutil.ReadAll(resp.Body)
-		t.Logf("On %s, body: %s", test.path, b)
 		resp.Body.Close()
 	}
 }

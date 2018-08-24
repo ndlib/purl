@@ -1,0 +1,3 @@
+{{template "header" "500 - Server Error"}}
+
+{{template "footer"}}

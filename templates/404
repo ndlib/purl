@@ -1,0 +1,9 @@
+{{template "header" "404 - Page Not Found"}}
+
+<p class="large">The requested page could not be found.<p>
+
+<p class="large">
+Try searching on the <a href="https://library.nd.edu">library website</a>?
+</p>
+
+{{template "footer"}}

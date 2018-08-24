@@ -1,0 +1,25 @@
+{{template "header" "Repository PURL Service"}}
+
+<div class="quarter small"></div>
+<div class="three_quarters normal">
+    <table id="stats_table">
+        <tr>
+            <td>Total PURLs</td>
+            <td>{{.Total}}</td>
+        </tr>
+        <tr>
+            <td>Most Used PURL</td>
+            <td><a href="/view/{{.MostUsed}}">Purl {{.MostUsed}}</a></td>
+        </tr>
+        <tr>
+            <td>Total PURLs Used Today</td>
+            <td>{{.TotalToday}}</td>
+        </tr>
+        <tr>
+            <td>PURL with highest usage count used today</td>
+            <td><a href="/view/{{.MostUsedToday}}">Purl {{.MostUsedToday}}</a></td>
+        </tr>
+    </table>
+</div>
+
+{{template "footer"}}
