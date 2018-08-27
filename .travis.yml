@@ -1,9 +1,8 @@
 language: go
 go:
-  - 1.6.4
-  - 1.7.4
-  - 1.7.5
-  - 1.8
+  - 1.9.7
+  - 1.10.4
+  - "1.11"
 install:
   - go get
 services:
@@ -15,5 +14,4 @@ env:
 before_script:
   - mysql -e "create database IF NOT EXISTS test;" -uroot
   - mysql -e "source test/seed_data.sql;" -uroot test
-  - go get github.com/stretchr/testify/assert
-script: go test -tags=mysql
+script: go test -v -tags=mysql

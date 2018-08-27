@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAllPurls(t *testing.T) {
+func TestMySQLAllPurls(t *testing.T) {
 	assert := assert.New(t)
 
 	result := mysqlTarget.AllPurls()
@@ -27,7 +27,7 @@ func TestAllPurls(t *testing.T) {
 	}
 }
 
-func TestFindPurl(t *testing.T) {
+func TestMySQLFindPurl(t *testing.T) {
 	assert := assert.New(t)
 
 	result, ok := mysqlTarget.FindPurl(5)
@@ -38,13 +38,13 @@ func TestFindPurl(t *testing.T) {
 	assert.NotEqual(result.DateCreated, time.Time{}, "Time incorrectly set on repo")
 	assert.NotEqual(result.ID, nil, "ID nil")
 
-	assert.Equal(result.ID, 5, "ID not correct")
-	assert.Equal(result.RepoID, "5", "Repo ID not correct")
-	assert.Equal(result.AccessCount, 625, "AccessCount not correct")
-	time_val, _ := time.Parse(time.RFC3339, "2016-11-15T14:16:14Z")
-	assert.Equal(result.LastAccessed, time_val, "LastAccesed not correct")
-	time_val, _ = time.Parse(time.RFC3339, "2011-09-14T14:40:11Z")
-	assert.Equal(result.DateCreated, time_val, "DateCreated not correct")
+	assert.Equal(5, result.ID, "ID not correct")
+	assert.Equal(5, result.RepoID, "Repo ID not correct")
+	assert.Equal(625, result.AccessCount, "AccessCount not correct")
+	tv, _ := time.Parse(time.RFC3339, "2016-11-15T14:16:14Z")
+	assert.Equal(tv, result.LastAccessed, "LastAccesed not correct")
+	tv, _ = time.Parse(time.RFC3339, "2011-09-14T14:40:11Z")
+	assert.Equal(tv, result.DateCreated, "DateCreated not correct")
 }
 
 func getaccesscount(purlID int) int {
@@ -53,7 +53,28 @@ func getaccesscount(purlID int) int {
 	return count
 }
 
-func TestLogRecordAccess(t *testing.T) {
+func TestMySQLFindQuery(t *testing.T) {
+	tests := []struct {
+		query string
+		nrows int
+	}{
+		{"", 10},
+		{"Catholic", 4},
+		{"catholic", 4},
+		{"papers", 0},
+		{"CurateND", 1},
+	}
+
+	for _, test := range tests {
+		result := mysqlTarget.FindQuery(test.query)
+		if len(result) != test.nrows {
+			t.Errorf("For '%s' expected %d rows, received %d\n",
+				test.query, test.nrows, len(result))
+		}
+	}
+}
+
+func TestMySQLLogAccess(t *testing.T) {
 	// get starting count, date/time
 	firstCount := getaccesscount(10)
 
