@@ -1,0 +1,40 @@
+{{template "header" "View PURL"}}
+
+<table id="view_purl_table">
+    <tbody>
+        <tr>
+            <td>ID</td>
+            <td>{{.ID}}</td>
+        </tr>
+        <tr>
+            <td>Note</td>
+            <td>{{.Information}}</td>
+        </tr>
+        <tr>
+            <td>File Name</td>
+            <td>{{.Filename}}</td>
+        </tr>
+        <tr>
+            <td>Date Created</td>
+            <td>{{.DateCreated.Format "2006-01-02"}}</td>
+        </tr>
+        <tr>
+            <td>Repository URL</td>
+            <td><a href="{{.URL}}">{{.URL}} </a></td>
+        </tr>
+        <tr>
+            <td>PURL</td>
+            <td><a href="/view/{{.ID}}/{{.Filename}}"> https://repository.library.nd.edu/view/{{.ID}}/{{.Filename}}</a></td>
+        </tr>
+        <tr>
+            <td>Last Accessed</td>
+            <td>{{.LastAccessed}}</td>
+        </tr>
+        <tr>
+            <td>Access Count</td>
+            <td>{{.AccessCount}}</td>
+        </tr>
+    </tbody>
+</table>
+
+{{template "footer"}}

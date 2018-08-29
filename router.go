@@ -15,13 +15,11 @@ type route struct {
 }
 
 var repoRoutes = []route{
-	{"GET", "/", Index},
-	{"GET", "/admin", AdminIndex},
-	{"GET", "/purls", PurlIndex},
-	{"POST", "/purl/create", PurlCreate},
+	{"GET", "/", IndexHandler},
+	{"GET", "/admin", AdminHandler},
 	{"GET", "/view/{purlId}", PurlShow},
 	{"GET", "/view/{purlId}/{filename}", PurlShowFile},
-	{"GET", "/query?={query}", Query},
+	{"GET", "/admin/search", AdminSearchHandler},
 }
 
 // NewRouter returns a Handler that will take care of all the repopurl routes.
@@ -33,6 +31,10 @@ func NewRouter() http.Handler {
 			Path(route.Pattern).
 			Handler(route.HandlerFunc)
 	}
+
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		notFound(w)
+	})
 
 	return &LogHandler{router}
 }

@@ -12,15 +12,12 @@ import (
 func TestShowFile(t *testing.T) {
 	// are the requests that should be proxied proxied?
 	table := []URLTest{
-		{path: "/view/abcdefg/any.pdf", status: 404, body: `{"code":404,"text":"Not Found"}` + "\n",
-			headers: map[string]string{"Content-Type": "application/json; charset=UTF-8"}},
-		{path: "/view/-1/any.pdf", status: 404, body: `{"code":404,"text":"Not Found"}` + "\n",
-			headers: map[string]string{"Content-Type": "application/json; charset=UTF-8"}},
-		{path: "/view/123456789/any.pdf", status: 404, body: `{"code":404,"text":"Not Found"}` + "\n",
-			headers: map[string]string{"Content-Type": "application/json; charset=UTF-8"}},
+		{path: "/view/abcdefg/any.pdf", status: 404},
+		{path: "/view/-1/any.pdf", status: 404},
+		{path: "/view/123456789/any.pdf", status: 404},
 		{path: "/view/500/any.pdf", status: 200, body: "a very good file"},
 		// upstream is 404
-		{path: "/view/501/any.pdf", status: 500, body: "Content Unavailable\n"},
+		{path: "/view/501/any.pdf", status: 500},
 		// redirects? (vs proxy)
 		{path: "/view/502/any.pdf", status: 500, body: "hello world"},
 		{path: "/view/503/any.pdf", status: 200, body: "hello world"},
@@ -28,29 +25,37 @@ func TestShowFile(t *testing.T) {
 		{path: "/view/504/any.pdf", status: 200, body: "hello world",
 			headers: map[string]string{
 				"Content-Type":        "application/qqq",
-				"Content-Disposition": "inline; filename=any.pdf"}},
+				"Content-Disposition": "inline; filename=best.pdf"}},
 		// propagage content length from upstream?
 		{path: "/view/505/any.pdf", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
-				"Content-Disposition": "inline; filename=any.pdf"}},
+				"Content-Disposition": "inline; filename=longfilename.pdf"}},
 		// test the inline/attachment switch (.zip, .ovf, .vmdk extensions)
 		{path: "/view/505/any.zip", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
-				"Content-Disposition": "attachment; filename=any.zip"}},
+				"Content-Disposition": "inline; filename=longfilename.pdf"}},
 		{path: "/view/505/any.ovf", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
-				"Content-Disposition": "attachment; filename=any.ovf"}},
+				"Content-Disposition": "inline; filename=longfilename.pdf"}},
 		{path: "/view/505/any.vmdk", status: 200, body: "a very",
 			headers: map[string]string{
 				"Content-Length":      "6",
-				"Content-Disposition": "attachment; filename=any.vmdk"}},
+				"Content-Disposition": "inline; filename=longfilename.pdf"}},
+		{path: "/view/506/any.pdf", status: 200, body: "a very",
+			headers: map[string]string{
+				"Content-Length":      "6",
+				"Content-Disposition": "attachment; filename=longfilename.vmdk"}},
+		{path: "/view/507/any.pdf", status: 200, body: "a very",
+			headers: map[string]string{
+				"Content-Length":      "6",
+				"Content-Disposition": "attachment; filename=longfilename.zip"}},
 	}
 
 	for _, test := range table {
-		checkSimpleGetRequest(t, repoServer.URL+test.path, test)
+		checkSimpleGetRequest(t, repoServer, test)
 	}
 }
 
@@ -63,7 +68,8 @@ type URLTest struct {
 
 // checkSimpleGetRequest does a GET request to URL, and then compares the response code and
 // response body to what was provided. Any errors are flagged on t.
-func checkSimpleGetRequest(t *testing.T, URL string, test URLTest) {
+func checkSimpleGetRequest(t *testing.T, server *httptest.Server, test URLTest) {
+	URL := server.URL + test.path
 	resp, err := http.Get(URL)
 	if err != nil {
 		t.Fatal(err)
@@ -73,7 +79,7 @@ func checkSimpleGetRequest(t *testing.T, URL string, test URLTest) {
 		t.Errorf("On %s received status %d, expected %d", test.path, resp.StatusCode, test.status)
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
-	if string(b) != test.body {
+	if test.body != "" && string(b) != test.body {
 		t.Errorf("On %s received body: %s\n    expected: %s", test.path, b, test.body)
 	}
 	t.Log(resp)
@@ -86,12 +92,43 @@ func checkSimpleGetRequest(t *testing.T, URL string, test URLTest) {
 	resp.Body.Close()
 }
 
+func TestLogAccess(t *testing.T) {
+	tests := []struct {
+		ID        int
+		path      string
+		status    int
+		increment bool
+	}{
+		{500, "/view/500/a", 200, true},  // usual case
+		{500, "/view/500", 200, false},   // record view page
+		{501, "/view/501/a", 500, false}, // error on proxy
+		{502, "/view/502/a", 500, true},  // redirect to error
+		{503, "/view/503/a", 200, true},  // redirect to good
+	}
+	for _, test := range tests {
+		purlv1, ok := datasource.FindPurl(test.ID)
+		if !ok {
+			t.Error("Couldn't find purl", test.ID)
+			continue
+		}
+		checkSimpleGetRequest(t, repoServer, URLTest{path: test.path, status: test.status})
+		purlv2, _ := datasource.FindPurl(test.ID)
+		delta := purlv2.AccessCount - purlv1.AccessCount
+		if test.increment && delta <= 0 {
+			t.Error("Found count", purlv2.AccessCount, "expected something larger than", purlv1.AccessCount)
+		} else if !test.increment && delta > 0 {
+			t.Error("Found count", purlv2.AccessCount, "expected to be equal to", purlv1.AccessCount)
+		}
+	}
+}
+
 var (
 	repoServer  *httptest.Server
 	dummyServer *httptest.Server
 )
 
 func init() {
+	LoadTemplates("./templates")
 	memory := &memoryRepo{}
 	// have the handlers reference our test store
 	datasource = memory
@@ -101,7 +138,7 @@ func init() {
 	dummyServer = httptest.NewServer(http.HandlerFunc(dummyHandler))
 
 	// now seed data that points to the dummy server
-	seedItems := []RepoObj{
+	seedItems := []Purl{
 		{
 			ID:          500,
 			Filename:    "good.pdf",
@@ -138,13 +175,22 @@ func init() {
 			URL:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
 			Information: "",
 		},
+		{
+			ID:          506,
+			Filename:    "longfilename.vmdk",
+			URL:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
+			Information: "",
+		},
+		{
+			ID:          507,
+			Filename:    "longfilename.zip",
+			URL:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
+			Information: "",
+		},
 	}
 	for _, seed := range seedItems {
-		memory.CreateRepo(seed)
-		memory.CreatePurl(Purl{
-			ID:        seed.ID,
-			RepoObjID: fmt.Sprintf("%d", seed.ID),
-		})
+		seed.RepoID = seed.ID
+		memory.CreatePurl(seed)
 	}
 }
 
@@ -174,16 +220,15 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {
 	if typ != "" {
 		w.Header().Set("Content-Type", typ)
 	}
-	var n = len(data)
 	if size != "" {
 		w.Header().Set("Content-Length", size)
 		m, _ := strconv.Atoi(size)
-		if m < n {
-			n = m
+		if m < len(data) {
+			data = data[:m]
 		}
 	}
 	w.WriteHeader(status)
-	fmt.Fprintf(w, "%s", data[:n])
+	fmt.Fprintf(w, "%s", data)
 }
 
 // of course we test our dummy handler!
@@ -202,6 +247,6 @@ func TestDummyHandler(t *testing.T) {
 	}
 
 	for _, test := range table {
-		checkSimpleGetRequest(t, dummyServer.URL+test.path, test)
+		checkSimpleGetRequest(t, dummyServer, test)
 	}
 }

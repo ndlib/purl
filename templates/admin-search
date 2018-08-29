@@ -1,0 +1,26 @@
+{{template "header" "Search Results - PURL List"}}
+
+<table id="purl_table">
+    <tr>
+        <th>PURL ID</th>
+        <th>File Name</th>
+        <th>Repository URL</th>
+        <th>PURL URL</th>
+        <th>Access Count</th>
+        <th>Last Access</th>
+        <th>Description</th>
+    </tr>
+    {{range .}}
+        <tr>
+            <td><a href="/view/{{.ID}}">{{.ID}}</a></td>
+            <td>{{.Filename}}</td>
+            <td><a href="{{.URL}}">{{.Filename}} Repo Link</a></td>
+            <td><a href="/view/{{.ID}}/{{.Filename}}">{{.Filename}} PURL</a></td>
+            <td>{{.AccessCount}}</td>
+            <td>{{.LastAccessed.Format "2006-01-02"}}</td>
+            <td>{{.Information}}</td>
+        </tr>
+    {{end}}
+</table>
+
+{{template "footer"}}
