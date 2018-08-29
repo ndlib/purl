@@ -52,6 +52,8 @@ func TestShowFile(t *testing.T) {
 			headers: map[string]string{
 				"Content-Length":      "6",
 				"Content-Disposition": "attachment; filename=longfilename.zip"}},
+		// suppressed record
+		{path: "/view/508/download", status: 404},
 	}
 
 	for _, test := range table {
@@ -82,7 +84,7 @@ func checkSimpleGetRequest(t *testing.T, server *httptest.Server, test URLTest) 
 	if test.body != "" && string(b) != test.body {
 		t.Errorf("On %s received body: %s\n    expected: %s", test.path, b, test.body)
 	}
-	t.Log(resp)
+	//t.Log(resp)
 	for header, expected := range test.headers {
 		received := resp.Header.Get(header)
 		if received != expected {
@@ -187,6 +189,12 @@ func init() {
 			URL:         dummyServer.URL + "/200?data=a+very+long+text&size=6",
 			Information: "",
 		},
+		{
+			ID:          508,
+			Filename:    "suppressed",
+			URL:         dummyServer.URL + "/200-",
+			Information: "",
+		},
 	}
 	for _, seed := range seedItems {
 		seed.RepoID = seed.ID
@@ -210,7 +218,7 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {
 	data := r.FormValue("data")
 	typ := r.FormValue("type")
 	size := r.FormValue("size")
-	if status < 0 || status >= 1000 {
+	if status <= 0 || status >= 1000 {
 		// REALLY bad status. normalize it
 		status = 400
 	}
