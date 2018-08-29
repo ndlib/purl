@@ -77,8 +77,10 @@ var (
 
 // LoadTemplates will load and compile our templates into memory
 func LoadTemplates(path string) error {
-	var err error
-	templates, err = template.ParseGlob(filepath.Join(path, "*"))
+	t := template.New("")
+	t = t.Funcs(template.FuncMap{"isSuppressed": isSuppressed})
+	t, err := t.ParseGlob(filepath.Join(path, "*"))
+	templates = t
 	return err
 }
 
@@ -153,6 +155,13 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// isSuppressed returns true if the given purl has been publically suppressed.
+// A record is supporessed by having its URL contain a trailing hyphen.
+// This marker was designed to be backward compatable with the existing database schema.
+func isSuppressed(p Purl) bool {
+	return len(p.URL) > 0 && p.URL[len(p.URL)-1] == '-'
+}
+
 // PurlShowFile returns either the upstream content of this PURL or
 // a redirect to the upstream content. The decision depends on the contents
 // of the Information field in the PURL.
@@ -164,8 +173,9 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If there is no record, or if it has been suppressed, return not found.
 	purl, ok := datasource.FindPurl(purlID)
-	if !ok {
+	if !ok || isSuppressed(purl) {
 		notFound(w)
 		return
 	}

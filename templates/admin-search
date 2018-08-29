@@ -14,7 +14,7 @@
         <tr>
             <td><a href="/view/{{.ID}}">{{.ID}}</a></td>
             <td>{{.Filename}}</td>
-            <td><a href="{{.URL}}">{{.Filename}} Repo Link</a></td>
+            <td>{{if isSuppressed .}}Suppressed{{else}}<a href="{{.URL}}">{{.Filename}} Repo Link</a>{{end}}</td>
             <td><a href="/view/{{.ID}}/{{.Filename}}">{{.Filename}} PURL</a></td>
             <td>{{.AccessCount}}</td>
             <td>{{.LastAccessed.Format "2006-01-02"}}</td>

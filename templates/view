@@ -20,7 +20,7 @@
         </tr>
         <tr>
             <td>Repository URL</td>
-            <td><a href="{{.URL}}">{{.URL}} </a></td>
+            <td>{{if isSuppressed .}}Suppressed{{else}}<a href="{{.URL}}">{{.URL}}</a>{{end}}</td>
         </tr>
         <tr>
             <td>PURL</td>
