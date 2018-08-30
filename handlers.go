@@ -32,7 +32,7 @@ type Repository interface {
 }
 
 // A Purl represents a single redirect entry in the database.
-// (The database stores this information accross two tables, but we don't need
+// (The database stores this information across two tables, but we don't need
 // to know that here).
 type Purl struct {
 	ID           int
@@ -43,19 +43,6 @@ type Purl struct {
 	Filename     string
 	URL          string
 	Information  string
-}
-
-// A RepoObj is a braindead structure needed because we are mirroring
-// how the PURLs are stored in the database. For the most part there
-// is always a one-to-one relationship between a Purl and a RepoObj.
-type RepoObj struct {
-	ID           int       `json:"id"`
-	Filename     string    `json:"filename"`
-	URL          string    `json:"URL"`
-	DateAdded    time.Time `json:"date_added"`
-	AddSourceIP  string    `json:"add_source_ip"`
-	DateModified time.Time `json:"date_modified"`
-	Information  string    `json:"information"`
 }
 
 type Stats struct {
@@ -155,9 +142,9 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// isSuppressed returns true if the given purl has been publically suppressed.
-// A record is supporessed by having its URL contain a trailing hyphen.
-// This marker was designed to be backward compatable with the existing database schema.
+// isSuppressed returns true if the given purl has been publicly suppressed.
+// A record is suppressed by having its URL contain a trailing hyphen.
+// This marker was designed to be backward compatible with the existing database schema.
 func isSuppressed(p Purl) bool {
 	return len(p.URL) > 0 && p.URL[len(p.URL)-1] == '-'
 }
@@ -235,8 +222,4 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-}
-
-// Helper to set http.ResponseWriter
-func setResponseContent(w http.ResponseWriter, r *http.Response, filename string) {
 }
