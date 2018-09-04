@@ -4,6 +4,8 @@
 *.so
 *.swp
 repopurl
+cmd/repo-munge/repo-munge
+repo-munge
 
 # Folders
 _obj
