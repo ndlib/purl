@@ -28,7 +28,7 @@ func NewMySQL(conn string) (Repository, error) {
 func (sq *mysqlDB) AllPurls() []Purl {
 	const query = `SELECT
 		p.purl_id, p.repo_object_id, p.access_count, p.last_accessed, p.date_created, r.filename, r.url, r.information
-		FROM purl as p left join repo_object as r on p.repo_object_id = r.repo_object_id;`
+		FROM purl as p inner join repo_object as r on p.repo_object_id = r.repo_object_id;`
 
 	var result []Purl
 	rows, err := sq.db.Query(query)
@@ -71,7 +71,7 @@ func scanPurl(rows *sql.Rows) Purl {
 func (sq *mysqlDB) FindPurl(id int) (Purl, bool) {
 	rows, err := sq.db.Query(`
 		SELECT p.purl_id, p.repo_object_id, p.access_count, p.last_accessed, p.date_created, r.filename, r.url, r.information
-		FROM purl as p left join repo_object as r on p.repo_object_id = r.repo_object_id
+		FROM purl as p inner join repo_object as r on p.repo_object_id = r.repo_object_id
 		WHERE purl_id = ?
 		LIMIT 1;`,
 		id)
@@ -93,7 +93,7 @@ func (sq *mysqlDB) FindQuery(query string) []Purl {
 		return sq.AllPurls()
 	}
 	const qstring = `SELECT p.purl_id, p.repo_object_id, p.access_count, p.last_accessed, p.date_created, r.filename, r.url, r.information
-		FROM purl as p left join repo_object as r on p.repo_object_id = r.repo_object_id
+		FROM purl as p inner join repo_object as r on p.repo_object_id = r.repo_object_id
 		WHERE r.information LIKE ?;`
 	rows, err := sq.db.Query(qstring, "%"+query+"%")
 	if err != nil {
