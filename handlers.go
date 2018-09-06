@@ -146,7 +146,7 @@ func PurlShow(w http.ResponseWriter, r *http.Request) {
 // A record is suppressed by having its URL contain a trailing hyphen.
 // This marker was designed to be backward compatible with the existing database schema.
 func isSuppressed(p Purl) bool {
-	return len(p.URL) > 0 && p.URL[len(p.URL)-1] == '-'
+	return strings.HasSuffix(p.URL, "-")
 }
 
 // PurlShowFile returns either the upstream content of this PURL or
@@ -196,8 +196,6 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	datasource.LogAccess(r, purl)
-
 	// For certain file extensions, we set the download to be an "attachment"
 	// so a web browser will not try to open it in the browser window.
 	//
@@ -217,6 +215,12 @@ func PurlShowFile(w http.ResponseWriter, r *http.Request) {
 	if resp.ContentLength > 0 {
 		w.Header().Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
 	}
+
+	if r.Method == "HEAD" {
+		return
+	}
+
+	datasource.LogAccess(r, purl)
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {

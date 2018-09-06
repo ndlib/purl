@@ -19,6 +19,7 @@ var repoRoutes = []route{
 	{"GET", "/admin", AdminHandler},
 	{"GET", "/view/{purlId}", PurlShow},
 	{"GET", "/view/{purlId}/{filename}", PurlShowFile},
+	{"HEAD", "/view/{purlId}/{filename}", PurlShowFile},
 	{"GET", "/admin/search", AdminSearchHandler},
 }
 
