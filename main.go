@@ -20,6 +20,12 @@ func main() {
 		panic(err)
 	}
 
+	staticFilePath = os.Getenv("STATIC_PATH")
+	if staticFilePath == "" {
+		staticFilePath = "./static"
+	}
+	log.Println("Static files at", staticFilePath)
+
 	rootRedirect = os.Getenv("ROOT_REDIRECT")
 	log.Println("Redirecting / to", rootRedirect)
 

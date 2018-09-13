@@ -7,9 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
     <!-- Feel free to split the CSS into separate files, if you like. -->
-    <style type="text/css">
-    {{template "css"}}
-    </style>
+    <link href="base.css" rel="stylesheet">
 </head>
 <body>
 <div id="header">

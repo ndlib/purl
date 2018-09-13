@@ -24,6 +24,7 @@ All configuration is via environment variables.
  * `FEDORA_USER` - the Fedora user name to use. Defaults to ""
  * `FEDORA_PASS` - the Fedora password to use. Defaults to ""
  * `TEMPLATE_PATH` - the directory to load our HTML files from. Defaults to "./templates"
+ * `STATIC_PATH` - the directory containing the static files used by the site. Defaults to "./static"
  * `ROOT_REDIRECT` - the URL to redirect the root route `/` to. (Maybe this should be hardcoded?)
 
 The only database supported is MySQL (since that is where the legacy database is).

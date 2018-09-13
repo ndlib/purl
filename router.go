@@ -33,6 +33,11 @@ func NewRouter() http.Handler {
 			Handler(route.HandlerFunc)
 	}
 
+	// are we serving static files?
+	if staticFilePath != "" {
+		router.HandleFunc("/{filename}", StaticHandler)
+	}
+
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 	})

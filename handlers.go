@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -60,6 +61,7 @@ var (
 	fedoraPassword       string
 	datasource           Repository
 	rootRedirect         string
+	staticFilePath       string
 )
 
 // LoadTemplates will load and compile our templates into memory
@@ -121,6 +123,40 @@ func AdminSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func StaticHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["filename"]
+	if filename == "" || filename == ".." {
+		notFound(w)
+		return
+	}
+
+	f, err := os.Open(filepath.Join(staticFilePath, filename))
+	if err != nil {
+		// dont log missing files, but do log other errors so we can fix them
+		if !os.IsNotExist(err) {
+			log.Println(err)
+		}
+		notFound(w)
+		return
+	}
+	defer f.Close()
+
+	d, err := f.Stat()
+	if err != nil {
+		log.Println(err)
+		serverError(w)
+		return
+	}
+
+	if d.IsDir() {
+		notFound(w)
+		return
+	}
+
+	http.ServeContent(w, r, d.Name(), d.ModTime(), f)
 }
 
 // PurlShow returns metadata for the given PURL to w.
