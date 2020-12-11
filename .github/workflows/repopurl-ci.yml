@@ -20,7 +20,7 @@ jobs:
       run: sudo service mysql start
 
     - name: Create test DB
-      run: - mysql -e "create database IF NOT EXISTS test;" -uroot -proot
+      run: mysql -e "create database test;" -uroot -proot
     
     - name: Seed test DB
       run: mysql -e "source test/seed_data.sql;" -uroot test -proot
