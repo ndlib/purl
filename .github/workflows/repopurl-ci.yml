@@ -25,6 +25,9 @@ jobs:
     - name: Seed test DB
       run: mysql -e "source test/seed_data.sql;" -uroot test -proot
 
+    - name: Install needed packages
+      run: go get
+
     - name: Run Go Tests
       env:
         MYSQL_CONNECTION: 'root:root@tcp(0.0.0.0:3306)/test'
