@@ -1,0 +1,34 @@
+name: repopurl-ci
+
+on:
+  push:
+jobs:
+  run-go-tests:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: start mysql DB
+      run: sudo service mysql start
+
+    - name: Create test DB
+      run: mysql -e "create database test;" -uroot -proot
+    
+    - name: Seed test DB
+      run: mysql -e "source test/seed_data.sql;" -uroot test -proot
+
+    - name: Install needed packages
+      run: go get
+
+    - name: Run Go Tests
+      env:
+        MYSQL_CONNECTION: 'root:root@tcp(0.0.0.0:3306)/test'
+      run: go test -v -tags=mysql
