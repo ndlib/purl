@@ -19,6 +19,7 @@ var repoRoutes = []route{
 	{"GET", "/admin", AdminHandler},
 	{"GET", "/view/{purlId}", PurlShow},
 	{"GET", "/view/{purlId}/{filename}", PurlShowFile},
+	{"HEAD", "/view/{purlId}/{filename}", PurlShowFile},
 	{"GET", "/admin/search", AdminSearchHandler},
 }
 
@@ -30,6 +31,11 @@ func NewRouter() http.Handler {
 			Methods(route.Method).
 			Path(route.Pattern).
 			Handler(route.HandlerFunc)
+	}
+
+	// are we serving static files?
+	if staticFilePath != "" {
+		router.HandleFunc("/{filename}", StaticHandler)
 	}
 
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
